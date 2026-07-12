@@ -17,7 +17,7 @@ export async function apiGet(path) {
 export async function apiPost(path, payload) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(payload || {})
   });
@@ -30,7 +30,7 @@ export async function apiPost(path, payload) {
 export async function apiPatch(path, payload) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(payload || {})
   });
@@ -43,7 +43,6 @@ export async function apiPatch(path, payload) {
 export async function apiDelete(path) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "DELETE",
-    headers: { "X-Requested-With": "XMLHttpRequest" },
     credentials: "include"
   });
 

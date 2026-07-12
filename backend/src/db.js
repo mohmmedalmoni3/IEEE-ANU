@@ -132,55 +132,6 @@ export async function initDb() {
         support_url TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
-
-      CREATE TABLE IF NOT EXISTS admin_activity (
-        id TEXT PRIMARY KEY,
-        admin_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-        action TEXT NOT NULL,
-        target_type TEXT NOT NULL,
-        target_id TEXT,
-        description TEXT NOT NULL,
-        metadata TEXT NOT NULL DEFAULT '{}',
-        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS admin_notifications (
-        id TEXT PRIMARY KEY,
-        type TEXT NOT NULL,
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        target_type TEXT,
-        target_id TEXT,
-        is_read INTEGER NOT NULL DEFAULT 0,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS login_events (
-        id TEXT PRIMARY KEY,
-        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-        event_type TEXT NOT NULL DEFAULT 'login',
-        ip_address TEXT,
-        forwarded_for TEXT,
-        user_agent TEXT,
-        device_type TEXT,
-        browser TEXT,
-        operating_system TEXT,
-        platform TEXT,
-        language TEXT,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS live_workshop (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        meet_url TEXT NOT NULL,
-        speaker TEXT,
-        starts_at TEXT,
-        is_live INTEGER NOT NULL DEFAULT 0,
-        is_visible INTEGER NOT NULL DEFAULT 1,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
     `);
 
     const { rows } = await pgPool.query(
@@ -283,57 +234,6 @@ export async function initDb() {
       support_url TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS admin_activity (
-      id TEXT PRIMARY KEY,
-      admin_id TEXT,
-      action TEXT NOT NULL,
-      target_type TEXT NOT NULL,
-      target_id TEXT,
-      description TEXT NOT NULL,
-      metadata TEXT NOT NULL DEFAULT '{}',
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS admin_notifications (
-      id TEXT PRIMARY KEY,
-      type TEXT NOT NULL,
-      title TEXT NOT NULL,
-      message TEXT NOT NULL,
-      target_type TEXT,
-      target_id TEXT,
-      is_read INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS login_events (
-      id TEXT PRIMARY KEY,
-      user_id TEXT,
-      event_type TEXT NOT NULL DEFAULT 'login',
-      ip_address TEXT,
-      forwarded_for TEXT,
-      user_agent TEXT,
-      device_type TEXT,
-      browser TEXT,
-      operating_system TEXT,
-      platform TEXT,
-      language TEXT,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS live_workshop (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT,
-      meet_url TEXT NOT NULL,
-      speaker TEXT,
-      starts_at TEXT,
-      is_live INTEGER NOT NULL DEFAULT 0,
-      is_visible INTEGER NOT NULL DEFAULT 1,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
