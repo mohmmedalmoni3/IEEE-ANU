@@ -1,11 +1,11 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 function getAuthHeaders(extraHeaders = {}) {
   const headers = { ...extraHeaders };
 
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("ieee_anu_session_token");
-    if (token) {
+const token =
+  localStorage.getItem("ieee_anu_session_token") ||
+  localStorage.getItem("token");    if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
   }
