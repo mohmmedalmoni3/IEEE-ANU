@@ -159,13 +159,16 @@ function getCookie(req, name) {
 }
 
 function setSessionCookie(res, user) {
-  const token = signToken({ sub: user.id, role: user.role });
+  const token = signToken(user);
+  res.cookie("ieee_session", token, cookieOptions);
+  return token;
+}  const token = signToken({ sub: user.id, role: user.role });
   const secure = cookieSecure ? "; Secure" : "";
   res.setHeader(
     "Set-Cookie",
     `ieee_session=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=${cookieSameSite}; Priority=High${secure}`
   );
-}
+
 
 function clearSessionCookie(res) {
   const secure = cookieSecure ? "; Secure" : "";
@@ -829,8 +832,11 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
       targetId: id
     });
     await recordLoginEvent(req, user, "register");
-    setSessionCookie(res, user);
-    res.status(201).json({ user: publicUser(user) });
+    const token = setSessionCookie(res, user);
+res.json({
+  user: publicUser(user),
+  token
+});
   } catch (error) {
     next(error);
   }
@@ -848,8 +854,11 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
 
     user = await applyConfiguredAdmin(user);
     await recordLoginEvent(req, user, "login");
-    setSessionCookie(res, user);
-    res.json({ user: publicUser(user) });
+    const token = setSessionCookie(res, user);
+res.status(201).json({
+  user: publicUser(user),
+  token
+});
   } catch (error) {
     next(error);
   }
