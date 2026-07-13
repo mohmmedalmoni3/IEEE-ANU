@@ -16,8 +16,14 @@ export default function AuthForms() {
     setMessage("");
     const form = new FormData(event.currentTarget);
     try {
-      const data = await apiPost("/auth/login", Object.fromEntries(form));
+   const data = await apiPost("/auth/login", Object.fromEntries(form));
+
+if (!data.token) {
+  throw new Error("لم يتم استلام رمز تسجيل الدخول من الخادم");
+}
+
 localStorage.setItem("ieee_anu_session_token", data.token);
+localStorage.setItem("token", data.token);
 localStorage.setItem("ieee_user", JSON.stringify(data.user));
 router.push("/profile");
     } catch (error) {
