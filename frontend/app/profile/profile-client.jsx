@@ -24,14 +24,27 @@ export default function ProfileClient() {
 
     async function loadProfile() {
       try {
-        const profile = await apiGet("/auth/me");
-        localStorage.setItem("ieee_user", JSON.stringify(profile.user));
+const token = localStorage.getItem("ieee_anu_session_token");
+
+const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+  cache: "no-store",
+  credentials: "include",
+  headers: {
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  }
+});
+
+if (!profileResponse.ok) {
+  throw new Error("Unauthorized");
+}
+
+const profile = await profileResponse.json();        localStorage.setItem("ieee_user", JSON.stringify(profile.user));
         setUser(profile.user);
 
         const applicationData = await apiGet("/applications/me");
         setApplications(applicationData.applications || []);
       } catch {
-     const token = localStorage.getItem("ieee_anu_session_token");
+    const token = localStorage.getItem("ieee_anu_session_token");
 
 if (!token) {
   localStorage.removeItem("ieee_user");
