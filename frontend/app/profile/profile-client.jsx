@@ -31,9 +31,14 @@ export default function ProfileClient() {
         const applicationData = await apiGet("/applications/me");
         setApplications(applicationData.applications || []);
       } catch {
-        localStorage.removeItem("ieee_user");
-        setUser(null);
-        setApplications([]);
+     const token = localStorage.getItem("ieee_anu_session_token");
+
+if (!token) {
+  localStorage.removeItem("ieee_user");
+  setUser(null);
+}
+
+setApplications([]);
       } finally {
         setLoading(false);
       }
@@ -44,8 +49,9 @@ export default function ProfileClient() {
 
   async function logout() {
     await apiPost("/auth/logout");
-    localStorage.removeItem("ieee_user");
-    router.push("/login");
+   localStorage.removeItem("ieee_user");
+localStorage.removeItem("ieee_anu_session_token");
+router.push("/login");
   }
 
   if (loading && !user) {
