@@ -17,8 +17,9 @@ export default function AuthForms() {
     const form = new FormData(event.currentTarget);
     try {
       const data = await apiPost("/auth/login", Object.fromEntries(form));
-      localStorage.setItem("ieee_user", JSON.stringify(data.user));
-      router.push("/profile");
+localStorage.setItem("ieee_anu_session_token", data.token);
+localStorage.setItem("ieee_user", JSON.stringify(data.user));
+router.push("/profile");
     } catch (error) {
       setMessage(error.message);
     }
@@ -35,8 +36,9 @@ export default function AuthForms() {
     }
     try {
       const data = await apiPost("/auth/register", payload);
-      localStorage.setItem("ieee_user", JSON.stringify(data.user));
-      router.push("/profile");
+localStorage.setItem("ieee_anu_session_token", data.token);
+localStorage.setItem("ieee_user", JSON.stringify(data.user));
+router.push("/profile");
     } catch (error) {
       setMessage(error.message);
     }
