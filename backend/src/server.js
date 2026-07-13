@@ -159,15 +159,18 @@ function getCookie(req, name) {
 }
 
 function setSessionCookie(res, user) {
-  const token = signToken(user);
+  const token = signToken({ sub: user.id, role: user.role });
+
   res.cookie("ieee_session", token, cookieOptions);
-  return token;
-}  const token = signToken({ sub: user.id, role: user.role });
+
   const secure = cookieSecure ? "; Secure" : "";
   res.setHeader(
     "Set-Cookie",
     `ieee_session=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=${cookieSameSite}; Priority=High${secure}`
   );
+
+  return token;
+}
 
 
 function clearSessionCookie(res) {
