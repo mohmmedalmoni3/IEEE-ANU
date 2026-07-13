@@ -161,7 +161,6 @@ function getCookie(req, name) {
 function setSessionCookie(res, user) {
   const token = signToken({ sub: user.id, role: user.role });
 
-  res.cookie("ieee_session", token, cookieOptions);
 
   const secure = cookieSecure ? "; Secure" : "";
   res.setHeader(
