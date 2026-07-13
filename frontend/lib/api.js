@@ -1,5 +1,18 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+function getAuthHeaders(extraHeaders = {}) {
+  const headers = { ...extraHeaders };
+
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("ieee_anu_session_token");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+}
+
 async function parseJson(response) {
   return response.json().catch(() => ({}));
 }
@@ -7,7 +20,8 @@ async function parseJson(response) {
 export async function apiGet(path) {
   const response = await fetch(`${API_URL}${path}`, {
     cache: "no-store",
-    credentials: "include"
+    credentials: "include",
+    headers: getAuthHeaders()
   });
   const data = await parseJson(response);
   if (!response.ok) throw new Error(data.message || "فشل الاتصال بالخادم");
@@ -17,7 +31,10 @@ export async function apiGet(path) {
 export async function apiPost(path, payload) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    headers: getAuthHeaders({
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    }),
     credentials: "include",
     body: JSON.stringify(payload || {})
   });
@@ -30,7 +47,10 @@ export async function apiPost(path, payload) {
 export async function apiPatch(path, payload) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    headers: getAuthHeaders({
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    }),
     credentials: "include",
     body: JSON.stringify(payload || {})
   });
@@ -43,7 +63,9 @@ export async function apiPatch(path, payload) {
 export async function apiDelete(path) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "DELETE",
-    headers: { "X-Requested-With": "XMLHttpRequest" },
+    headers: getAuthHeaders({
+      "X-Requested-With": "XMLHttpRequest"
+    }),
     credentials: "include"
   });
 
