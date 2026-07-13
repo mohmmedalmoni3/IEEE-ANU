@@ -19,7 +19,12 @@ const links = [
 const adminLinks = [
   { href: "/admin/applications", label: "إدارة الطلبات" },
   { href: "/admin/users", label: "إدارة المستخدمين" },
-  { href: "/admin/messages", label: "رسائل المستخدمين" }
+  { href: "/admin/messages", label: "رسائل المستخدمين" },
+  { href: "/admin/notifications", label: "التنبيهات" },
+  { href: "/admin/activity", label: "سجل النشاط" },
+  { href: "/admin/logins", label: "سجلات الدخول" },
+  { href: "/admin/live-workshop", label: "الورشة المباشرة" },
+  { href: "/admin/content", label: "إدارة المحتوى" }
 ];
 
 export default function Navbar() {

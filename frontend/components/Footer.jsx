@@ -9,13 +9,13 @@ export default function Footer() {
           <h3>IEEE ANU</h3>
           <p>مجتمع طلابي تقني يربط التعلم العملي بالابتكار والعمل الجماعي.</p>
           <div className="social-links">
-            <a href="https://www.instagram.com/ieee_anu/" target="_blank" aria-label="Instagram">
+            <a href="https://www.instagram.com/ieee_anu/" target="_blank" rel="noreferrer" aria-label="Instagram">
               <Instagram />
             </a>
-            <a href="https://www.linkedin.com/company/ieee-anu-sb/" target="_blank" aria-label="LinkedIn">
+            <a href="https://www.linkedin.com/company/ieee-anu-sb/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
               <Linkedin />
             </a>
-            <a href="https://www.youtube.com/@IEEEANUStudentBranch" target="_blank" aria-label="YouTube">
+            <a href="https://www.youtube.com/@IEEEANUStudentBranch" target="_blank" rel="noreferrer" aria-label="YouTube">
               <Youtube />
             </a>
           </div>
@@ -40,9 +40,7 @@ export default function Footer() {
         <p>© 2026 IEEE ANU - جميع الحقوق محفوظة</p>
         <p className="developers-credit">
           Developed by{" "}
-          <a href="https://mohamme-cmd.github.io/aboutme/" target="_blank" rel="noreferrer">Mohammed</a>
-          {" "}&{" "}
-          <a href="https://ayham-portfolio.com" target="_blank" rel="noreferrer">Ayham</a>
+          <a href="https://mohamme-cmd.github.io/aboutme/" target="_blank" rel="noreferrer">Mohammed Almomani</a>
         </p>
       </div>
     </footer>

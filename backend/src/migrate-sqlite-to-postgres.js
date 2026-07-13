@@ -1,6 +1,6 @@
+import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
-import { DatabaseSync } from "node:sqlite";
 import { db, initDb } from "./db.js";
 
 const sqlitePath = process.env.SQLITE_PATH || path.resolve("backend/data/ieee-anu.sqlite");
@@ -12,7 +12,7 @@ if (!fs.existsSync(sqlitePath)) {
 
 await initDb();
 
-const sqlite = new DatabaseSync(sqlitePath);
+const sqlite = new Database(sqlitePath);
 const tables = ["users", "stats", "creators", "videos", "products", "applications", "admin_messages"];
 
 for (const table of tables) {

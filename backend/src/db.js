@@ -1,7 +1,7 @@
 import "dotenv/config";
+import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
-import { DatabaseSync } from "node:sqlite";
 import pg from "pg";
 
 const { Pool, types } = pg;
@@ -27,7 +27,7 @@ if (usePostgres) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  sqliteDb = new DatabaseSync(dbPath);
+  sqliteDb = new Database(dbPath);
   sqliteDb.exec("PRAGMA foreign_keys = ON");
   sqliteDb.exec("PRAGMA journal_mode = WAL");
 }
@@ -47,6 +47,12 @@ function toPostgresQuery(sql, params = {}) {
   });
 
   return { text, values };
+}
+
+function toSqliteParams(params = {}) {
+  return Object.fromEntries(
+    Object.entries(params).map(([key, value]) => [key.replace(/^\$/, ""), value])
+  );
 }
 
 export async function initDb() {
@@ -131,6 +137,55 @@ export async function initDb() {
         support_email TEXT,
         support_url TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS admin_activity (
+        id TEXT PRIMARY KEY,
+        admin_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        action TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id TEXT,
+        description TEXT NOT NULL,
+        metadata TEXT NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS admin_notifications (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        target_type TEXT,
+        target_id TEXT,
+        is_read INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS login_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        event_type TEXT NOT NULL DEFAULT 'login',
+        ip_address TEXT,
+        forwarded_for TEXT,
+        user_agent TEXT,
+        device_type TEXT,
+        browser TEXT,
+        operating_system TEXT,
+        platform TEXT,
+        language TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS live_workshop (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        meet_url TEXT NOT NULL,
+        speaker TEXT,
+        starts_at TEXT,
+        is_live INTEGER NOT NULL DEFAULT 0,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -235,6 +290,57 @@ export async function initDb() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL
     );
+
+    CREATE TABLE IF NOT EXISTS admin_activity (
+      id TEXT PRIMARY KEY,
+      admin_id TEXT,
+      action TEXT NOT NULL,
+      target_type TEXT NOT NULL,
+      target_id TEXT,
+      description TEXT NOT NULL,
+      metadata TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_notifications (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      target_type TEXT,
+      target_id TEXT,
+      is_read INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS login_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      event_type TEXT NOT NULL DEFAULT 'login',
+      ip_address TEXT,
+      forwarded_for TEXT,
+      user_agent TEXT,
+      device_type TEXT,
+      browser TEXT,
+      operating_system TEXT,
+      platform TEXT,
+      language TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS live_workshop (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      meet_url TEXT NOT NULL,
+      speaker TEXT,
+      starts_at TEXT,
+      is_live INTEGER NOT NULL DEFAULT 0,
+      is_visible INTEGER NOT NULL DEFAULT 1,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   const applicationColumns = sqliteDb.prepare("PRAGMA table_info(applications)").all();
@@ -257,7 +363,7 @@ export async function getOne(sql, params = {}) {
     return result.rows[0] || null;
   }
 
-  return sqliteDb.prepare(sql).get(params) || null;
+  return sqliteDb.prepare(sql).get(toSqliteParams(params)) || null;
 }
 
 export async function getAll(sql, params = {}) {
@@ -267,7 +373,7 @@ export async function getAll(sql, params = {}) {
     return result.rows;
   }
 
-  return sqliteDb.prepare(sql).all(params);
+  return sqliteDb.prepare(sql).all(toSqliteParams(params));
 }
 
 export async function run(sql, params = {}) {
@@ -276,5 +382,5 @@ export async function run(sql, params = {}) {
     return pgPool.query(query.text, query.values);
   }
 
-  return sqliteDb.prepare(sql).run(params);
+  return sqliteDb.prepare(sql).run(toSqliteParams(params));
 }

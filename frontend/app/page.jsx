@@ -1,3 +1,4 @@
+import LiveWorkshopCard from "@/components/LiveWorkshopCard";
 import PageShell from "@/components/PageShell";
 import StatCounter from "@/components/StatCounter";
 import VideoCard from "@/components/VideoCard";
@@ -11,7 +12,8 @@ const fallback = {
     { label: "المهندسون المعتمدون", value: 8 },
     { label: "إجمالي الزيارات", value: 250 }
   ],
-  videos: []
+  videos: [],
+  liveWorkshop: null
 };
 
 export default async function HomePage() {
@@ -30,10 +32,12 @@ export default async function HomePage() {
           <p className="hero-subtitle">تجربة تقنية عملية تجمع التعلم، الورش، المحتوى، والعمل الجماعي.</p>
           <div className="hero-buttons">
             <Link href="/applications" className="btn btn-primary">انضم الآن</Link>
-            <a href="https://www.instagram.com/ieee_anu/" target="_blank" className="btn btn-secondary">انستقرام</a>
+            <a href="https://www.instagram.com/ieee_anu/" target="_blank" className="btn btn-secondary">إنستقرام</a>
           </div>
         </div>
       </section>
+
+      <LiveWorkshopCard workshop={site.liveWorkshop} />
 
       <section className="stats">
         <div className="stats-container">
