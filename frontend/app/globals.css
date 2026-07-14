@@ -1772,3 +1772,19 @@ td small {
     grid-template-columns: 1fr;
   }
 }
+.page-hero {
+    min-height: auto;
+    padding: 96px 20px 40px;
+  }
+
+  .page-content {
+    padding: 40px 18px;
+  }
+
+  .about-values-grid {
+    gap: 14px;
+  }
+
+  .about-highlight {
+    padding: 20px;
+  }
