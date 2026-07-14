@@ -5,6 +5,11 @@ import VideoCard from "@/components/VideoCard";
 import { apiGet } from "@/lib/api";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
+
 const fallback = {
   stats: [
     { label: "المشتركون الآن", value: 50 },

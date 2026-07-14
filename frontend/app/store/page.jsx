@@ -3,6 +3,12 @@ import PageShell from "@/components/PageShell";
 import { apiGet } from "@/lib/api";
 import { Package, Wrench } from "lucide-react";
 
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
+
 export default async function StorePage() {
   let products = [];
   try {
