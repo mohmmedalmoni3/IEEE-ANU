@@ -5,7 +5,8 @@ function getAuthHeaders(extraHeaders = {}) {
   if (typeof window !== "undefined") {
 const token =
   localStorage.getItem("ieee_anu_session_token") ||
-  localStorage.getItem("token");    if (token) {
+  localStorage.getItem("token");  
+    if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
   }

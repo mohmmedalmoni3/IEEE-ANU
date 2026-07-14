@@ -12,6 +12,10 @@ function statusClass(status) {
   return "pending";
 }
 
+function getStoredToken() {
+  return localStorage.getItem("ieee_anu_session_token") || localStorage.getItem("token");
+}
+
 export default function ProfileClient() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -23,35 +27,24 @@ export default function ProfileClient() {
     if (saved) setUser(JSON.parse(saved));
 
     async function loadProfile() {
+      const token = getStoredToken();
+
+      if (!token) {
+        localStorage.removeItem("ieee_user");
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       try {
-const token = localStorage.getItem("ieee_anu_session_token");
-
-const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-  cache: "no-store",
-  credentials: "include",
-  headers: {
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
-  }
-});
-
-if (!profileResponse.ok) {
-  throw new Error("Unauthorized");
-}
-
-const profile = await profileResponse.json();        localStorage.setItem("ieee_user", JSON.stringify(profile.user));
+        const profile = await apiGet("/auth/me");
+        localStorage.setItem("ieee_user", JSON.stringify(profile.user));
         setUser(profile.user);
 
         const applicationData = await apiGet("/applications/me");
         setApplications(applicationData.applications || []);
       } catch {
-    const token = localStorage.getItem("ieee_anu_session_token");
-
-if (!token) {
-  localStorage.removeItem("ieee_user");
-  setUser(null);
-}
-
-setApplications([]);
+        setApplications([]);
       } finally {
         setLoading(false);
       }
@@ -61,10 +54,14 @@ setApplications([]);
   }, []);
 
   async function logout() {
-    await apiPost("/auth/logout");
-   localStorage.removeItem("ieee_user");
-localStorage.removeItem("ieee_anu_session_token");
-router.push("/login");
+    try {
+      await apiPost("/auth/logout");
+    } finally {
+      localStorage.removeItem("ieee_user");
+      localStorage.removeItem("ieee_anu_session_token");
+      localStorage.removeItem("token");
+      router.push("/login");
+    }
   }
 
   if (loading && !user) {

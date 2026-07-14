@@ -43,6 +43,7 @@ router.push("/profile");
     try {
       const data = await apiPost("/auth/register", payload);
 localStorage.setItem("ieee_anu_session_token", data.token);
+localStorage.setItem("token", data.token);
 localStorage.setItem("ieee_user", JSON.stringify(data.user));
 router.push("/profile");
     } catch (error) {
