@@ -21,8 +21,6 @@ const fallback = {
   liveWorkshop: null
 };
 
-// في frontend/app/page.js أو .tsx
-export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   let site = fallback;
