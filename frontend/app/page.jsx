@@ -21,7 +21,6 @@ const fallback = {
   liveWorkshop: null
 };
 
-
 export default async function HomePage() {
   let site = fallback;
   try {
