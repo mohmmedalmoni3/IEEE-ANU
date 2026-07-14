@@ -89,7 +89,7 @@ router.push("/profile");
             </div>
             <label>اسم المستخدم<input name="username" required placeholder="Ahmed_123" /></label>
             <label>البريد الإلكتروني<input name="email" type="email" required placeholder="example@email.com" /></label>
-            <label>معرف التواصل<input name="discord" placeholder="username#1234" /></label>
+            <label>معرف التواصل<input name="discord" placeholder="رقم الهاتف" /></label>
             <div className="form-row">
               <label>كلمة المرور<input name="password" type="password" minLength={8} required /></label>
               <label>تأكيد كلمة المرور<input name="confirmPassword" type="password" minLength={8} required /></label>
