@@ -121,16 +121,89 @@ export async function notifyAdminsNewApplication(application, adminEmails) {
     to: adminEmails.join(","),
     subject,
     text,
-    html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
-      <h2>طلب انضمام جديد إلى IEEE ANU</h2>
-      <p><strong>الاسم:</strong> ${application.fullName}</p>
-      <p><strong>البريد الجامعي:</strong> ${application.universityEmail}</p>
-      <p><strong>العمر:</strong> ${application.age}</p>
-      <p><strong>الدولة:</strong> ${application.country}</p>
-      <p><strong>الخبرة:</strong> ${application.experience}</p>
-      <p><strong>المهارات:</strong> ${skills}</p>
-      <p><strong>سبب الانضمام:</strong><br />${application.whyJoin}</p>
-    </div>`
+    html: `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طلب انضمام جديد</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;font-family:'Cairo',Arial,sans-serif;background:#f5f7fa">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f5f7fa">
+    <tr>
+      <td style="padding:40px 20px">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+          <tr>
+            <td style="background:linear-gradient(135deg,#0066cc 0%,004080 100%);padding:40px;text-align:center">
+              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700">IEEE ANU</h1>
+              <p style="margin:10px 0 0;color:#ffffff;font-size:16px;opacity:0.9">طلب انضمام جديد</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding:20px;background:#f8f9fc;border-radius:12px;margin-bottom:20px">
+                    <p style="margin:0 0 8px;color:#666;font-size:14px">الاسم الكامل</p>
+                    <p style="margin:0;color:#1a1a2e;font-size:18px;font-weight:600">${application.fullName}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;background:#f8f9fc;border-radius:12px;margin-bottom:20px">
+                    <p style="margin:0 0 8px;color:#666;font-size:14px">البريد الجامعي</p>
+                    <p style="margin:0;color:#1a1a2e;font-size:18px;font-weight:600">${application.universityEmail}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="padding:20px;background:#f8f9fc;border-radius:12px;width:48%">
+                          <p style="margin:0 0 8px;color:#666;font-size:14px">العمر</p>
+                          <p style="margin:0;color:#1a1a2e;font-size:18px;font-weight:600">${application.age}</p>
+                        </td>
+                        <td style="width:4%"></td>
+                        <td style="padding:20px;background:#f8f9fc;border-radius:12px;width:48%">
+                          <p style="margin:0 0 8px;color:#666;font-size:14px">الدولة</p>
+                          <p style="margin:0;color:#1a1a2e;font-size:18px;font-weight:600">${application.country}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;background:#f8f9fc;border-radius:12px;margin-bottom:20px">
+                    <p style="margin:0 0 8px;color:#666;font-size:14px">الخبرة</p>
+                    <p style="margin:0;color:#1a1a2e;font-size:18px;font-weight:600">${application.experience}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;background:#f8f9fc;border-radius:12px;margin-bottom:20px">
+                    <p style="margin:0 0 8px;color:#666;font-size:14px">المهارات</p>
+                    <p style="margin:0;color:#1a1a2e;font-size:18px;font-weight:600">${skills}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;background:#e8f4fd;border-radius:12px;border-right:4px solid #0066cc">
+                    <p style="margin:0 0 8px;color:#0066cc;font-size:14px;font-weight:600">سبب الانضمام</p>
+                    <p style="margin:0;color:#1a1a2e;font-size:16px;line-height:1.8">${application.whyJoin}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:30px 40px;background:#f8f9fc;text-align:center">
+              <p style="margin:0;color:#666;font-size:14px">هذه رسالة آلية من IEEE ANU</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
   });
 }
 
@@ -146,15 +219,73 @@ export async function notifyApplicantStatus(application) {
   const message = statusMessages[application.status] || `تم تحديث حالة طلبك إلى: ${application.status}`;
   const note = application.adminNote ? `\n\nملاحظة الإدارة: ${application.adminNote}` : "";
 
+  const statusColors = {
+    "مقبول": "#10b981",
+    "مرفوض": "#ef4444",
+    "بحاجة لمقابلة": "#f59e0b",
+    "إعادة المقابلة": "#f59e0b",
+    "قيد المراجعة": "#6366f1"
+  };
+
+  const statusColor = statusColors[application.status] || "#6366f1";
+
   await sendMail({
     to: application.universityEmail,
     subject: "تحديث حالة طلبك - IEEE ANU",
     text: [`مرحبا ${application.fullName},`, "", message, note].join("\n"),
-    html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
-      <h2>تحديث حالة طلبك</h2>
-      <p>مرحبا ${application.fullName},</p>
-      <p>${message}</p>
-      ${application.adminNote ? `<p><strong>ملاحظة الإدارة:</strong><br />${application.adminNote}</p>` : ""}
-    </div>`
+    html: `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحديث حالة طلبك</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;font-family:'Cairo',Arial,sans-serif;background:#f5f7fa">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f5f7fa">
+    <tr>
+      <td style="padding:40px 20px">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+          <tr>
+            <td style="background:linear-gradient(135deg,#0066cc 0%,004080 100%);padding:40px;text-align:center">
+              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700">IEEE ANU</h1>
+              <p style="margin:10px 0 0;color:#ffffff;font-size:16px;opacity:0.9">تحديث حالة طلبك</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding:30px;background:#f8f9fc;border-radius:12px;text-align:center;margin-bottom:30px">
+                    <p style="margin:0 0 10px;color:#666;font-size:14px">حالة الطلب</p>
+                    <p style="margin:0;color:${statusColor};font-size:24px;font-weight:700">${application.status}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;background:#e8f4fd;border-radius:12px;border-right:4px solid #0066cc;margin-bottom:20px">
+                    <p style="margin:0;color:#1a1a2e;font-size:18px;line-height:1.8">${message}</p>
+                  </td>
+                </tr>
+                ${application.adminNote ? `
+                <tr>
+                  <td style="padding:20px;background:#fff3cd;border-radius:12px;border-right:4px solid #f59e0b">
+                    <p style="margin:0 0 8px;color:#b45309;font-size:14px;font-weight:600">ملاحظة الإدارة</p>
+                    <p style="margin:0;color:#1a1a2e;font-size:16px;line-height:1.8">${application.adminNote}</p>
+                  </td>
+                </tr>` : ''}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:30px 40px;background:#f8f9fc;text-align:center">
+              <p style="margin:0;color:#666;font-size:14px">هذه رسالة آلية من IEEE ANU</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
   });
 }

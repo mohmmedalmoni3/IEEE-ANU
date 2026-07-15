@@ -1073,17 +1073,78 @@ app.post("/api/admin/messages", requireAuth, requireAdmin, async (req, res, next
 
     // Use batch sending for better performance
     const emailAddresses = validRecipients.map((r) => r.email);
+    const priorityColors = {
+      "عاجل": "#ef4444",
+      "مهم": "#f59e0b",
+      "تنبيه": "#0066cc"
+    };
+    const priorityColor = priorityColors[priorityLabel] || "#0066cc";
+
     const { sentCount, failedCount, errors } = await sendBatchEmails({
       to: emailAddresses,
       subject: `[${priorityLabel}] ${subject}`,
       text: textParts.join("\n"),
-      html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8;color:#111">
-        <h2>${escapeHtml(subject)}</h2>
-        <p>مرحبا [الاسم]،</p>
-        <div style="white-space:pre-wrap">${escapeHtml(message)}</div>
-        ${note ? `<p><strong>ملاحظة:</strong> ${escapeHtml(note)}</p>` : ""}
-        ${supportHtml}
-      </div>`
+      html: `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(subject)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;font-family:'Cairo',Arial,sans-serif;background:#f5f7fa">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f5f7fa">
+    <tr>
+      <td style="padding:40px 20px">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+          <tr>
+            <td style="background:linear-gradient(135deg,#0066cc 0%,004080 100%);padding:40px;text-align:center">
+              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700">IEEE ANU</h1>
+              <p style="margin:10px 0 0;color:#ffffff;font-size:16px;opacity:0.9">${escapeHtml(priorityLabel)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding:30px;background:#f8f9fc;border-radius:12px;margin-bottom:30px">
+                    <h2 style="margin:0 0 15px;color:#1a1a2e;font-size:24px;font-weight:700">${escapeHtml(subject)}</h2>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;background:#e8f4fd;border-radius:12px;border-right:4px solid ${priorityColor};margin-bottom:20px">
+                    <p style="margin:0;color:#1a1a2e;font-size:16px;line-height:1.8;white-space:pre-wrap">${escapeHtml(message)}</p>
+                  </td>
+                </tr>
+                ${note ? `
+                <tr>
+                  <td style="padding:20px;background:#fff3cd;border-radius:12px;border-right:4px solid #f59e0b;margin-bottom:20px">
+                    <p style="margin:0 0 8px;color:#b45309;font-size:14px;font-weight:600">ملاحظة إضافية</p>
+                    <p style="margin:0;color:#1a1a2e;font-size:16px;line-height:1.8">${escapeHtml(note)}</p>
+                  </td>
+                </tr>` : ''}
+                ${supportEmail || supportUrl ? `
+                <tr>
+                  <td style="padding:20px;background:#f0fdf4;border-radius:12px;border-right:4px solid #10b981">
+                    <p style="margin:0 0 8px;color:#047857;font-size:14px;font-weight:600">التواصل الفوري مع الدعم</p>
+                    ${supportEmail ? `<p style="margin:0 0 5px;color:#1a1a2e;font-size:16px">البريد: <a href="mailto:${escapeHtml(supportEmail)}" style="color:#0066cc;text-decoration:none">${escapeHtml(supportEmail)}</a></p>` : ''}
+                    ${supportUrl ? `<p style="margin:0;color:#1a1a2e;font-size:16px">الرابط: <a href="${escapeHtml(supportUrl)}" style="color:#0066cc;text-decoration:none">${escapeHtml(supportUrl)}</a></p>` : ''}
+                  </td>
+                </tr>` : ''}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:30px 40px;background:#f8f9fc;text-align:center">
+              <p style="margin:0;color:#666;font-size:14px">هذه رسالة من IEEE ANU</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
     });
 
     const failed = errors.map((e) => ({ email: e.batch.join(", "), error: e.error }));
