@@ -2,12 +2,11 @@
 
 import { apiGet } from "@/lib/api";
 import LiveWorkshopCard from "@/components/LiveWorkshopCard";
-import StatCounter from "@/components/StatCounter";
 import VideoCard from "@/components/VideoCard";
 import { useEffect, useState } from "react";
 
 export default function HomeContent() {
-  const [data, setData] = useState({ stats: [], creators: [], videos: [], products: [], liveWorkshop: null });
+  const [data, setData] = useState({ creators: [], videos: [], products: [], liveWorkshop: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,26 +20,9 @@ export default function HomeContent() {
     return <section className="page-content"><div className="info-card center">جاري تحميل المحتوى...</div></section>;
   }
 
-  const hasContent = data.liveWorkshop || data.stats.length > 0 || data.videos.length > 0 || data.creators.length > 0 || data.products.length > 0;
-
-  if (!hasContent) {
-    return <section className="page-content"><div className="info-card center">لا يوجد محتوى للعرض حالياً</div></section>;
-  }
-
   return (
     <>
       {data.liveWorkshop && <LiveWorkshopCard workshop={data.liveWorkshop} />}
-
-      {data.stats.length > 0 && (
-        <section className="stats-section">
-          <h2 className="section-title">إنجازاتنا بالأرقام</h2>
-          <div className="stats-grid">
-            {data.stats.map((stat, index) => (
-              <StatCounter key={stat.id} value={stat.value} label={stat.label} index={index} />
-            ))}
-          </div>
-        </section>
-      )}
 
       {data.videos.length > 0 && (
         <section className="videos-section">
