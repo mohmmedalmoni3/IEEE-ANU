@@ -28,9 +28,16 @@ const transporter = createTransporter();
 
 export async function verifyMailTransport() {
   if (!transporter) {
-    throw new Error("SMTP غير مضبوط. أضف SMTP_HOST و SMTP_USER و SMTP_PASS في backend/.env حتى تصل الرسائل إلى البريد فعليا.");
+    throw new Error("SMTP غير مضبوط. أضف SMTP_HOST و SMTP_USER و SMTP_PASS في backend/.env حتى تصل الرسائل إلى البريد فعلياً.");
   }
-  await transporter.verify();
+  try {
+    await Promise.race([
+      transporter.verify(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("انتهت مهلة الاتصال بـ SMTP (10 ثواني)")), 10000))
+    ]);
+  } catch (error) {
+    throw new Error(`فشل الاتصال بـ SMTP: ${error.message}`);
+  }
 }
 
 export async function sendMail({ to, subject, text, html, requireDelivery = false }) {
