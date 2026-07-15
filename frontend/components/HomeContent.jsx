@@ -1,28 +1,90 @@
-import HomeContent from "@/components/HomeContent";
-import PageShell from "@/components/PageShell";
-import Link from "next/link";
+"use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+import { apiGet } from "@/lib/api";
+import LiveWorkshopCard from "@/components/LiveWorkshopCard";
+import StatCounter from "@/components/StatCounter";
+import VideoCard from "@/components/VideoCard";
+import { useEffect, useState } from "react";
 
-export default function HomePage() {
+export default function HomeContent() {
+  const [data, setData] = useState({ stats: [], creators: [], videos: [], products: [], liveWorkshop: null });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet("/site")
+      .then((responseData) => setData(responseData))
+      .catch((error) => console.error("Failed to load site content:", error))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <section className="page-content"><div className="info-card center">جاري تحميل المحتوى...</div></section>;
+  }
+
+  const hasContent = data.liveWorkshop || data.stats.length > 0 || data.videos.length > 0 || data.creators.length > 0 || data.products.length > 0;
+
+  if (!hasContent) {
+    return <section className="page-content"><div className="info-card center">لا يوجد محتوى للعرض حالياً</div></section>;
+  }
+
   return (
-    <PageShell>
-      <section className="hero">
-        <div className="hero-bg-grid" />
-        <div className="hero-overlay" />
-        <div className="hero-content">
-          <h1 className="city-title">IEEE<br />ANU</h1>
-          <p className="hero-subtitle">تجربة تقنية عملية تجمع التعلم، الورش، المحتوى، والعمل الجماعي.</p>
-          <div className="hero-buttons">
-            <Link href="/applications" className="btn btn-primary">انضم الآن</Link>
-            <a href="https://www.instagram.com/ieee_anu/" target="_blank" className="btn btn-secondary">إنستقرام</a>
-          </div>
-        </div>
-      </section>
+    <>
+      {data.liveWorkshop && <LiveWorkshopCard workshop={data.liveWorkshop} />}
 
-      <HomeContent />
-    </PageShell>
+      {data.stats.length > 0 && (
+        <section className="stats-section">
+          <h2 className="section-title">إنجازاتنا بالأرقام</h2>
+          <div className="stats-grid">
+            {data.stats.map((stat, index) => (
+              <StatCounter key={stat.id} value={stat.value} label={stat.label} index={index} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data.videos.length > 0 && (
+        <section className="videos-section">
+          <h2 className="section-title">أحدث الفيديوهات</h2>
+          <div className="videos-grid">
+            {data.videos.map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data.creators.length > 0 && (
+        <section className="creators-section">
+          <h2 className="section-title">صناع المحتوى</h2>
+          <div className="creators-grid">
+            {data.creators.map((creator) => (
+              <a key={creator.id} href={creator.url} target="_blank" rel="noopener noreferrer" className="creator-card">
+                <div className="creator-platform">{creator.platform}</div>
+                <h3>{creator.name}</h3>
+                <p>{creator.role}</p>
+                {creator.followers && <span className="creator-followers">{creator.followers} متابع</span>}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data.products.length > 0 && (
+        <section className="products-section">
+          <h2 className="section-title">المتجر</h2>
+          <div className="products-grid">
+            {data.products.map((product) => (
+              <article key={product.id} className="product-card">
+                <h3>{product.name}</h3>
+                <p className="product-price">{product.price}</p>
+                <span className={`product-status ${product.status === "متوفر" ? "available" : "unavailable"}`}>
+                  {product.status}
+                </span>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
   );
 }
