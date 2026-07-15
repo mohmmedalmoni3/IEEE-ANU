@@ -83,7 +83,7 @@ export default async function HomePage() {
             <Link href="/applications" className="btn btn-primary">
               انضم الآن <ArrowLeft size={18} />
             </Link>
-            <Link href="/help" className="btn btn-secondary">مركز المساعدة</Link>
+            <a href="https://www.instagram.com/ieee_anu/" target="_blank" rel="noopener noreferrer" className="btn btn-secondary">إنستقرام</a>
           </div>
         </div>
       </section>
