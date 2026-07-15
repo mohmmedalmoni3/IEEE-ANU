@@ -75,10 +75,6 @@ export default async function HomePage() {
         <div className="hero-bg-grid" />
         <div className="hero-overlay" />
         <div className="hero-content">
-          <div className="hero-kicker">
-            <Sparkles size={18} />
-            IEEE ANU Student Branch
-          </div>
           <h1 className="city-title">IEEE<br />ANU</h1>
           <p className="hero-subtitle">
             منصة طلابية تقنية تجمع الورش المباشرة، المحتوى التعليمي، طلبات الانضمام، ومتابعة تجربة العضو في مكان واحد.
@@ -88,10 +84,6 @@ export default async function HomePage() {
               انضم الآن <ArrowLeft size={18} />
             </Link>
             <Link href="/help" className="btn btn-secondary">مركز المساعدة</Link>
-          </div>
-          <div className="hero-proof">
-            <span><Radio size={16} /> ورش مباشرة عبر Google Meet</span>
-            <span><CalendarCheck size={16} /> تقديم ومتابعة من داخل الحساب</span>
           </div>
         </div>
       </section>
