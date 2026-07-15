@@ -4,7 +4,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import express from "express";
 import { databaseProvider, getAll, getOne, initDb, run } from "./db.js";
-import { notifyAdminsNewApplication, notifyApplicantStatus, sendMail, verifyMailTransport } from "./mailer.js";
+import { notifyAdminsNewApplication, notifyApplicantStatus, sendMail, sendBatchEmails, verifyMailTransport } from "./mailer.js";
 
 dotenv.config();
 await initDb();
@@ -1048,55 +1048,45 @@ app.post("/api/admin/messages", requireAuth, requireAdmin, async (req, res, next
     }
 
     const priorityLabel = priority === "urgent" ? "عاجل" : priority === "important" ? "مهم" : "تنبيه";
-    let sentCount = 0;
-    let failedCount = 0;
-    const failed = [];
+    const textParts = [
+      `مرحبا [الاسم]،`,
+      "",
+      `[${priorityLabel}] ${subject}`,
+      "",
+      message
+    ];
 
-    for (const recipient of validRecipients) {
-      const recipientName = `${recipient.firstname || ""} ${recipient.lastname || ""}`.trim() || recipient.email;
-      const textParts = [
-        `مرحبا ${recipientName},`,
-        "",
-        `[${priorityLabel}] ${subject}`,
-        "",
-        message
-      ];
-
-      if (note) textParts.push("", `ملاحظة: ${note}`);
-      if (supportEmail || supportUrl) {
-        textParts.push("", "للتواصل الفوري مع الدعم:");
-        if (supportEmail) textParts.push(`البريد: ${supportEmail}`);
-        if (supportUrl) textParts.push(`الرابط: ${supportUrl}`);
-      }
-
-      const supportHtml = supportEmail || supportUrl
-        ? `<div style="margin-top:18px;padding:14px;border:1px solid #d9e7ff;border-radius:8px;background:#f6fbff">
-            <strong>التواصل الفوري مع الدعم</strong>
-            ${supportEmail ? `<p>البريد: <a href="mailto:${escapeHtml(supportEmail)}">${escapeHtml(supportEmail)}</a></p>` : ""}
-            ${supportUrl ? `<p>الرابط: <a href="${escapeHtml(supportUrl)}">${escapeHtml(supportUrl)}</a></p>` : ""}
-          </div>`
-        : "";
-
-      try {
-        await sendMail({
-          to: recipient.email,
-          subject: `[${priorityLabel}] ${subject}`,
-          text: textParts.join("\n"),
-          requireDelivery: true,
-          html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8;color:#111">
-            <h2>${escapeHtml(subject)}</h2>
-            <p>مرحبا ${escapeHtml(recipientName)},</p>
-            <div style="white-space:pre-wrap">${escapeHtml(message)}</div>
-            ${note ? `<p><strong>ملاحظة:</strong> ${escapeHtml(note)}</p>` : ""}
-            ${supportHtml}
-          </div>`
-        });
-        sentCount += 1;
-      } catch (error) {
-        failedCount += 1;
-        failed.push({ email: recipient.email, error: error.message });
-      }
+    if (note) textParts.push("", `ملاحظة: ${note}`);
+    if (supportEmail || supportUrl) {
+      textParts.push("", "للتواصل الفوري مع الدعم:");
+      if (supportEmail) textParts.push(`البريد: ${supportEmail}`);
+      if (supportUrl) textParts.push(`الرابط: ${supportUrl}`);
     }
+
+    const supportHtml = supportEmail || supportUrl
+      ? `<div style="margin-top:18px;padding:14px;border:1px solid #d9e7ff;border-radius:8px;background:#f6fbff">
+          <strong>التواصل الفوري مع الدعم</strong>
+          ${supportEmail ? `<p>البريد: <a href="mailto:${escapeHtml(supportEmail)}">${escapeHtml(supportEmail)}</a></p>` : ""}
+          ${supportUrl ? `<p>الرابط: <a href="${escapeHtml(supportUrl)}">${escapeHtml(supportUrl)}</a></p>` : ""}
+        </div>`
+      : "";
+
+    // Use batch sending for better performance
+    const emailAddresses = validRecipients.map((r) => r.email);
+    const { sentCount, failedCount, errors } = await sendBatchEmails({
+      to: emailAddresses,
+      subject: `[${priorityLabel}] ${subject}`,
+      text: textParts.join("\n"),
+      html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8;color:#111">
+        <h2>${escapeHtml(subject)}</h2>
+        <p>مرحبا [الاسم]،</p>
+        <div style="white-space:pre-wrap">${escapeHtml(message)}</div>
+        ${note ? `<p><strong>ملاحظة:</strong> ${escapeHtml(note)}</p>` : ""}
+        ${supportHtml}
+      </div>`
+    });
+
+    const failed = errors.map((e) => ({ email: e.batch.join(", "), error: e.error }));
 
     const id = crypto.randomUUID();
     await run(

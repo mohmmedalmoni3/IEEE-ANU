@@ -1,63 +1,102 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = Number(process.env.SMTP_PORT || 587);
-const smtpUser = process.env.SMTP_USER;
-const smtpPass = process.env.SMTP_PASS;
-const smtpSecure = process.env.SMTP_SECURE === "true";
-const fromEmail = process.env.MAIL_FROM || smtpUser || "IEEE ANU <no-reply@ieee-anu.local>";
+const resendApiKey = process.env.RESEND_API_KEY;
+const fromEmail = process.env.MAIL_FROM || "IEEE ANU <onboarding@resend.dev>";
+
+let resendClient = null;
+
+if (resendApiKey) {
+  resendClient = new Resend(resendApiKey);
+}
 
 export function hasSmtpConfig() {
-  return Boolean(smtpHost && smtpUser && smtpPass);
+  return Boolean(resendApiKey);
 }
-
-function createTransporter() {
-  if (!hasSmtpConfig()) return null;
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpSecure,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    }
-  });
-}
-
-const transporter = createTransporter();
 
 export async function verifyMailTransport() {
-  if (!transporter) {
-    throw new Error("SMTP غير مضبوط. أضف SMTP_HOST و SMTP_USER و SMTP_PASS في backend/.env حتى تصل الرسائل إلى البريد فعلياً.");
+  if (!resendClient) {
+    throw new Error("Resend غير مضبوط. أضف RESEND_API_KEY في backend/.env حتى تصل الرسائل إلى البريد فعلياً.");
   }
   try {
-    await Promise.race([
-      transporter.verify(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("انتهت مهلة الاتصال بـ SMTP (10 ثواني)")), 10000))
-    ]);
+    await resendClient.domains.list();
   } catch (error) {
-    throw new Error(`فشل الاتصال بـ SMTP: ${error.message}`);
+    throw new Error(`فشل الاتصال بـ Resend: ${error.message}`);
   }
 }
 
 export async function sendMail({ to, subject, text, html, requireDelivery = false }) {
   if (!to) return null;
 
-  if (!transporter) {
+  if (!resendClient) {
     if (requireDelivery) {
-      throw new Error("SMTP غير مضبوط، لذلك لا يمكن ضمان وصول الرسالة إلى البريد.");
+      throw new Error("Resend غير مضبوط، لذلك لا يمكن ضمان وصول الرسالة إلى البريد.");
     }
     console.log("[mail preview]", { to, subject, text });
     return null;
   }
 
-  return transporter.sendMail({
-    from: fromEmail,
-    to,
-    subject,
-    text,
-    html
-  });
+  try {
+    const { data, error } = await resendClient.emails.send({
+      from: fromEmail,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      text,
+      html
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  } catch (error) {
+    throw new Error(`فشل إرسال البريد: ${error.message}`);
+  }
+}
+
+export async function sendBatchEmails({ to, subject, text, html }) {
+  if (!resendClient) {
+    throw new Error("Resend غير مضبوط.");
+  }
+
+  if (!to || !to.length) {
+    return { sentCount: 0, failedCount: 0, errors: [] };
+  }
+
+  // Resend supports up to 100 recipients per batch
+  const batchSize = 100;
+  const batches = [];
+  for (let i = 0; i < to.length; i += batchSize) {
+    batches.push(to.slice(i, i + batchSize));
+  }
+
+  let sentCount = 0;
+  let failedCount = 0;
+  const errors = [];
+
+  for (const batch of batches) {
+    try {
+      const { data, error } = await resendClient.emails.send({
+        from: fromEmail,
+        to: batch,
+        subject,
+        text,
+        html
+      });
+
+      if (error) {
+        failedCount += batch.length;
+        errors.push({ batch, error: error.message });
+      } else {
+        sentCount += batch.length;
+      }
+    } catch (error) {
+      failedCount += batch.length;
+      errors.push({ batch, error: error.message });
+    }
+  }
+
+  return { sentCount, failedCount, errors };
 }
 
 export async function notifyAdminsNewApplication(application, adminEmails) {
