@@ -313,7 +313,6 @@ textarea {
 }
 
 .stats-container,
-.stats-grid,
 .youtube-grid,
 .cards-grid {
   max-width: 1180px;
@@ -1473,6 +1472,164 @@ td small {
 
 .notification-card.read {
   opacity: 0.68;
+}
+
+.premium-hero {
+  padding: 140px 24px 80px;
+}
+
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  color: #08111f;
+  background: #ffc23d;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.hero-proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.9rem;
+}
+
+.hero-proof span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.premium-section,
+.programs-section,
+.journey-section {
+  padding: 76px 24px;
+  background: linear-gradient(135deg, #070b13, #0a1a2e);
+}
+
+.premium-feature-grid,
+.programs-grid {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 22px;
+}
+
+.premium-feature-card,
+.program-card {
+  padding: 28px;
+  border: 1px solid rgba(32, 168, 255, 0.22);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.16);
+}
+
+.premium-feature-card svg,
+.program-card svg {
+  color: #20a8ff;
+  margin-bottom: 16px;
+}
+
+.premium-feature-card h3,
+.program-card h3 {
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.premium-feature-card p,
+.program-card p {
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.8;
+}
+
+.journey-section {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 34px;
+  align-items: start;
+}
+
+.journey-list {
+  list-style: none;
+  display: grid;
+  gap: 16px;
+}
+
+.journey-list li {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.journey-list li span {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0096ff;
+  color: #fff;
+  font-weight: 800;
+}
+
+.journey-list li strong {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.8;
+}
+
+.home-help-band {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 34px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  border: 1px solid rgba(32, 168, 255, 0.22);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.16);
+}
+
+.home-help-band svg {
+  color: #20a8ff;
+  margin-bottom: 12px;
+}
+
+.home-help-band h2 {
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.home-help-band p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+@media (max-width: 760px) {
+  .premium-section,
+  .journey-section,
+  .programs-section {
+    padding: 56px 18px;
+  }
+
+  .journey-section,
+  .home-help-band {
+    grid-template-columns: 1fr;
+  }
+
+  .journey-section > div {
+    justify-self: auto;
+  }
 }
 
 .content-editor {
