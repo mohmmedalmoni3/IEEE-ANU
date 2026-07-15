@@ -1073,73 +1073,154 @@ app.post("/api/admin/messages", requireAuth, requireAdmin, async (req, res, next
 
     // Use batch sending for better performance
     const emailAddresses = validRecipients.map((r) => r.email);
-    const priorityColors = {
-      "عاجل": "#ef4444",
-      "مهم": "#f59e0b",
-      "تنبيه": "#0066cc"
-    };
-    const priorityColor = priorityColors[priorityLabel] || "#0066cc";
 
     const { sentCount, failedCount, errors } = await sendBatchEmails({
       to: emailAddresses,
       subject: `[${priorityLabel}] ${subject}`,
       text: textParts.join("\n"),
       html: `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(subject)}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(subject)}</title>
+<!--[if !mso]><!-->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!--<![endif]-->
+<style>
+  body, table, td, a, p, div, span { font-family: 'Cairo', 'Tahoma', 'Segoe UI', Arial, sans-serif !important; }
+</style>
 </head>
-<body style="margin:0;padding:0;font-family:'Cairo',Arial,sans-serif;background:#f5f7fa">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f5f7fa">
+<body style="margin:0; padding:0; background-color:#f0f2f6; font-family: 'Cairo', 'Tahoma', 'Segoe UI', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f2f6; padding:48px 16px;">
     <tr>
-      <td style="padding:40px 20px">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(0,20,50,0.10);">
+
+          <!-- Top accent bar -->
           <tr>
-            <td style="background:linear-gradient(135deg,#0066cc 0%,004080 100%);padding:40px;text-align:center">
-              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700">IEEE ANU</h1>
-              <p style="margin:10px 0 0;color:#ffffff;font-size:16px;opacity:0.9">${escapeHtml(priorityLabel)}</p>
+            <td style="background:linear-gradient(90deg, #00629B 0%, #0088CC 50%, #00629B 100%); height:6px; line-height:6px; font-size:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(160deg, #003a5d 0%, #00629B 100%); padding:48px 30px 42px; text-align:center;">
+
+              <!-- Monogram badge -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;">
+                <tr>
+                  <td style="width:66px; height:66px; background-color:rgba(255,255,255,0.12); border:2px solid rgba(255,255,255,0.35); border-radius:50%; text-align:center; vertical-align:middle; font-size:24px; font-weight:bold; color:#ffffff; letter-spacing:1px;">
+                    IEEE
+                  </td>
+                </tr>
+              </table>
+
+              <div style="font-size:13px; letter-spacing:3px; color:#8fd1ff; text-transform:uppercase; margin-bottom:10px; font-weight:bold;">
+                Ajloun National University
+              </div>
+
+              <div style="font-size:29px; color:#ffffff; font-weight:800; line-height:1.4;">
+                ${escapeHtml(priorityLabel)}
+              </div>
+
+              <div style="font-size:15px; color:#c9e6fb; margin-top:10px;">
+                ${escapeHtml(subject)}
+              </div>
             </td>
           </tr>
+
+          <!-- Body -->
           <tr>
-            <td style="padding:40px">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <td style="padding:44px 40px 20px; text-align:right; color:#232833; font-size:16px; line-height:2;">
+              <p style="margin:0 0 22px;">
+                مرحبا،
+              </p>
+              <p style="margin:0 0 22px; white-space:pre-wrap;">
+                ${escapeHtml(message)}
+              </p>
+            </td>
+          </tr>
+
+          ${note ? `
+          <!-- Note -->
+          <tr>
+            <td style="padding:4px 40px 8px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding:30px;background:#f8f9fc;border-radius:12px;margin-bottom:30px">
-                    <h2 style="margin:0 0 15px;color:#1a1a2e;font-size:24px;font-weight:700">${escapeHtml(subject)}</h2>
+                  <td style="padding:20px; background-color:#fff9e6; border-radius:12px; border-right:4px solid #f59e0b;">
+                    <p style="margin:0 0 8px; color:#b45309; font-size:14px; font-weight:bold;">ملاحظة إضافية</p>
+                    <p style="margin:0; color:#1a1a2e; font-size:15px; line-height:1.8;">${escapeHtml(note)}</p>
                   </td>
                 </tr>
-                <tr>
-                  <td style="padding:20px;background:#e8f4fd;border-radius:12px;border-right:4px solid ${priorityColor};margin-bottom:20px">
-                    <p style="margin:0;color:#1a1a2e;font-size:16px;line-height:1.8;white-space:pre-wrap">${escapeHtml(message)}</p>
-                  </td>
-                </tr>
-                ${note ? `
-                <tr>
-                  <td style="padding:20px;background:#fff3cd;border-radius:12px;border-right:4px solid #f59e0b;margin-bottom:20px">
-                    <p style="margin:0 0 8px;color:#b45309;font-size:14px;font-weight:600">ملاحظة إضافية</p>
-                    <p style="margin:0;color:#1a1a2e;font-size:16px;line-height:1.8">${escapeHtml(note)}</p>
-                  </td>
-                </tr>` : ''}
-                ${supportEmail || supportUrl ? `
-                <tr>
-                  <td style="padding:20px;background:#f0fdf4;border-radius:12px;border-right:4px solid #10b981">
-                    <p style="margin:0 0 8px;color:#047857;font-size:14px;font-weight:600">التواصل الفوري مع الدعم</p>
-                    ${supportEmail ? `<p style="margin:0 0 5px;color:#1a1a2e;font-size:16px">البريد: <a href="mailto:${escapeHtml(supportEmail)}" style="color:#0066cc;text-decoration:none">${escapeHtml(supportEmail)}</a></p>` : ''}
-                    ${supportUrl ? `<p style="margin:0;color:#1a1a2e;font-size:16px">الرابط: <a href="${escapeHtml(supportUrl)}" style="color:#0066cc;text-decoration:none">${escapeHtml(supportUrl)}</a></p>` : ''}
-                  </td>
-                </tr>` : ''}
               </table>
             </td>
-          </tr>
+          </tr>` : ''}
+
+          ${supportEmail || supportUrl ? `
+          <!-- Support section -->
           <tr>
-            <td style="padding:30px 40px;background:#f8f9fc;text-align:center">
-              <p style="margin:0;color:#666;font-size:14px">هذه رسالة من IEEE ANU</p>
+            <td style="padding:4px 40px 8px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:20px; background-color:#f0fdf4; border-radius:12px; border-right:4px solid #10b981;">
+                    <p style="margin:0 0 8px; color:#047857; font-size:14px; font-weight:bold;">التواصل الفوري مع الدعم</p>
+                    ${supportEmail ? `<p style="margin:0 0 5px; color:#1a1a2e; font-size:15px;">البريد: <a href="mailto:${escapeHtml(supportEmail)}" style="color:#00629B; text-decoration:none;">${escapeHtml(supportEmail)}</a></p>` : ''}
+                    ${supportUrl ? `<p style="margin:0; color:#1a1a2e; font-size:15px;">الرابط: <a href="${escapeHtml(supportUrl)}" style="color:#00629B; text-decoration:none;">${escapeHtml(supportUrl)}</a></p>` : ''}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>` : ''}
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:0 40px 36px; text-align:right;">
+              <hr style="border:none; border-top:1px solid #eef1f6; margin:0 0 24px;">
+              <p style="margin:0; font-size:15px; color:#6b7280;">مع خالص التقدير،</p>
+              <p style="margin:4px 0 0; font-weight:bold; color:#00629B; font-size:16px;">فريق IEEE ANU</p>
+            </td>
+          </tr>
+
+          <!-- Footer - Social links -->
+          <tr>
+            <td style="background-color:#f7f9fc; padding:28px 40px; text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+                <tr>
+                  <td style="padding:0 8px;">
+                    <a href="https://instagram.com/ieeeanu" target="_blank" style="text-decoration:none; display:inline-block; width:38px; height:38px; background-color:#ffffff; border:1px solid #e2e6ee; border-radius:50%; text-align:center; line-height:38px; color:#00629B; font-size:15px; font-weight:bold;">IG</a>
+                  </td>
+                  <td style="padding:0 8px;">
+                    <a href="https://linkedin.com/company/ieeeanu" target="_blank" style="text-decoration:none; display:inline-block; width:38px; height:38px; background-color:#ffffff; border:1px solid #e2e6ee; border-radius:50%; text-align:center; line-height:38px; color:#00629B; font-size:15px; font-weight:bold;">in</a>
+                  </td>
+                  <td style="padding:0 8px;">
+                    <a href="https://facebook.com/ieeeanu" target="_blank" style="text-decoration:none; display:inline-block; width:38px; height:38px; background-color:#ffffff; border:1px solid #e2e6ee; border-radius:50%; text-align:center; line-height:38px; color:#00629B; font-size:15px; font-weight:bold;">FB</a>
+                  </td>
+                  <td style="padding:0 8px;">
+                    <a href="https://twitter.com/ieeeanu" target="_blank" style="text-decoration:none; display:inline-block; width:38px; height:38px; background-color:#ffffff; border:1px solid #e2e6ee; border-radius:50%; text-align:center; line-height:38px; color:#00629B; font-size:15px; font-weight:bold;">X</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 6px; font-size:13px; color:#6b7280;">
+                📧 ieeeanusupport@gmail.com &nbsp;|&nbsp; 🌐 ieeeanu.app
+              </p>
+              <p style="margin:0; font-size:12px; color:#9aa1ac;">
+                © 2026 IEEE ANU Student Branch. جميع الحقوق محفوظة.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Note outside card -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+          <tr>
+            <td style="text-align:center; font-size:12px; color:#a3a9b5; line-height:1.8;">
+              وصلتك هذه الرسالة لأنك مسجل في منصة IEEE ANU
             </td>
           </tr>
         </table>
+
       </td>
     </tr>
   </table>
