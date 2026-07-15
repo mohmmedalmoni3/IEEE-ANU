@@ -23,6 +23,10 @@ export default function HomeContent() {
 
   return (
     <>
+      <div className="decorative-bar">
+        <div className="decorative-text">IEEE ANU - تجربة تقنية عملية - انضم إلينا اليوم</div>
+      </div>
+
       {data.liveWorkshop && <LiveWorkshopCard workshop={data.liveWorkshop} />}
 
       {data.stats.length > 0 && (

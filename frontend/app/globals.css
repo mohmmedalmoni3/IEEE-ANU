@@ -313,6 +313,7 @@ textarea {
 }
 
 .stats-container,
+.stats-grid,
 .youtube-grid,
 .cards-grid {
   max-width: 1180px;
