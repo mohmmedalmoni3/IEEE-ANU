@@ -12,11 +12,33 @@ export default function ApplicationForm() {
   const [error, setError] = useState("");
   const [existingApplication, setExistingApplication] = useState(null);
   const [checkingExisting, setCheckingExisting] = useState(true);
+  const [settings, setSettings] = useState({
+    applicationsOpen: true,
+    applicationsLimit: 0
+  });
+  const [applicationsCount, setApplicationsCount] = useState(0);
 
   useEffect(() => {
-    apiGet("/applications/me")
-      .then((data) => setExistingApplication(data.applications?.[0] || null))
-      .catch(() => setExistingApplication(null))
+    Promise.all([
+      apiGet("/applications/me"),
+      apiGet("/settings"),
+      apiGet("/applications/count")
+    ])
+      .then(([applicationsData, settingsData, countData]) => {
+        setExistingApplication(applicationsData.applications?.[0] || null);
+        
+        const settingsMap = settingsData.settings || {};
+        setSettings({
+          applicationsOpen: settingsMap.applications_open === 'true',
+          applicationsLimit: parseInt(settingsMap.applications_limit || '0')
+        });
+        
+        setApplicationsCount(countData.count || 0);
+      })
+      .catch(() => {
+        setExistingApplication(null);
+        setSettings({ applicationsOpen: true, applicationsLimit: 0 });
+      })
       .finally(() => setCheckingExisting(false));
   }, []);
 
@@ -56,6 +78,26 @@ export default function ApplicationForm() {
           <span className="status-badge pending">{existingApplication.status}</span>
         </div>
         <Link className="apply-btn" href="/profile">عرض الملف الشخصي</Link>
+      </div>
+    );
+  }
+
+  if (!settings.applicationsOpen) {
+    return (
+      <div className="application-form center">
+        <h3>عذراً، استقبال الطلبات مغلق حالياً</h3>
+        <p>يرجى المحاولة مرة أخرى لاحقاً عندما يتم فتح باب التقديم.</p>
+        <Link className="apply-btn" href="/">العودة للصفحة الرئيسية</Link>
+      </div>
+    );
+  }
+
+  if (settings.applicationsLimit > 0 && applicationsCount >= settings.applicationsLimit) {
+    return (
+      <div className="application-form center">
+        <h3>عذراً، تم الوصول للحد الأقصى من الطلبات</h3>
+        <p>تم استقبال {settings.applicationsLimit} طلب حالياً. يرجى المحاولة مرة أخرى لاحقاً.</p>
+        <Link className="apply-btn" href="/">العودة للصفحة الرئيسية</Link>
       </div>
     );
   }

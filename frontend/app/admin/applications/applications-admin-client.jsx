@@ -27,13 +27,31 @@ export default function ApplicationsAdminClient() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [settings, setSettings] = useState({
+    applicationsOpen: true,
+    applicationsLimit: 0
+  });
+  const [showSettings, setShowSettings] = useState(false);
+  const [applicationsOpen, setApplicationsOpen] = useState(true);
+  const [applicationsLimit, setApplicationsLimit] = useState(0);
 
   useEffect(() => {
-    apiGet("/applications")
-      .then((data) => {
-        const items = data.applications || [];
+    Promise.all([
+      apiGet("/applications"),
+      apiGet("/settings")
+    ])
+      .then(([applicationsData, settingsData]) => {
+        const items = applicationsData.applications || [];
         setApplications(items);
         setNotes(Object.fromEntries(items.map((item) => [item.id, item.adminNote || ""])));
+        
+        const settingsMap = settingsData.settings || {};
+        setSettings({
+          applicationsOpen: settingsMap.applications_open === 'true',
+          applicationsLimit: parseInt(settingsMap.applications_limit || '0')
+        });
+        setApplicationsOpen(settingsMap.applications_open === 'true');
+        setApplicationsLimit(parseInt(settingsMap.applications_limit || '0'));
       })
       .catch((error) => setMessage(error.message))
       .finally(() => setLoading(false));
@@ -95,6 +113,25 @@ export default function ApplicationsAdminClient() {
       });
       if (expandedId === id) setExpandedId(null);
       setMessage("تم حذف الطلب بنجاح.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function saveSettings() {
+    setMessage("");
+    try {
+      const data = await apiPatch("/settings", {
+        applicationsOpen,
+        applicationsLimit
+      });
+      const settingsMap = data.settings || {};
+      setSettings({
+        applicationsOpen: settingsMap.applications_open === 'true',
+        applicationsLimit: parseInt(settingsMap.applications_limit || '0')
+      });
+      setMessage("تم تحديث الإعدادات بنجاح.");
+      setShowSettings(false);
     } catch (error) {
       setMessage(error.message);
     }
@@ -176,10 +213,43 @@ export default function ApplicationsAdminClient() {
           <option value="all">كل الحالات</option>
           {statuses.map((status) => <option key={status}>{status}</option>)}
         </select>
+        <button className="btn btn-secondary" type="button" onClick={() => setShowSettings(!showSettings)}>
+          {showSettings ? "إخفاء الإعدادات" : "إعدادات الطلبات"}
+        </button>
         <button className="btn btn-secondary" type="button" onClick={exportCsv} disabled={!filteredApplications.length}>
           تصدير CSV
         </button>
       </div>
+
+      {showSettings && (
+        <div className="info-card" style={{ marginBottom: "20px" }}>
+          <h3>إعدادات الطلبات</h3>
+          <div style={{ display: "grid", gap: "16px", marginTop: "16px" }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={applicationsOpen}
+                onChange={(e) => setApplicationsOpen(e.target.checked)}
+                style={{ marginLeft: "8px" }}
+              />
+              فتح استقبال الطلبات
+            </label>
+            <label>
+              حد عدد الطلبات (0 = بدون حدود)
+              <input
+                type="number"
+                min="0"
+                value={applicationsLimit}
+                onChange={(e) => setApplicationsLimit(parseInt(e.target.value) || 0)}
+                style={{ marginTop: "8px" }}
+              />
+            </label>
+            <button className="btn btn-primary" type="button" onClick={saveSettings}>
+              حفظ الإعدادات
+            </button>
+          </div>
+        </div>
+      )}
 
       {message && <div className="notice admin-notice">{message}</div>}
 

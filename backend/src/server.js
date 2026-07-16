@@ -1278,6 +1278,78 @@ app.delete("/api/applications/:id", requireAuth, requireAdmin, async (req, res, 
   }
 });
 
+// Settings API endpoints (public - no auth required)
+app.get("/api/settings", async (req, res, next) => {
+  try {
+    const settings = await getAll("SELECT * FROM settings ORDER BY key");
+    const settingsMap = {};
+    settings.forEach(setting => {
+      settingsMap[setting.key] = setting.value;
+    });
+    res.json({ settings: settingsMap });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get active applications count (public - no auth required)
+app.get("/api/applications/count", async (req, res, next) => {
+  try {
+    const result = await getOne(
+      `SELECT COUNT(*) as count FROM applications 
+       WHERE status IN ('قيد المراجعة', 'بحاجة لمقابلة', 'إعادة المقابلة')`
+    );
+    res.json({ count: result?.count || 0 });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/settings", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { applicationsOpen, applicationsLimit } = req.body;
+    
+    if (typeof applicationsOpen === 'boolean') {
+      const existing = await getOne("SELECT id FROM settings WHERE key = 'applications_open'");
+      if (existing) {
+        await run("UPDATE settings SET value = $value, updated_at = CURRENT_TIMESTAMP WHERE key = 'applications_open'", 
+          { $value: applicationsOpen ? 'true' : 'false' });
+      } else {
+        await run("INSERT INTO settings (id, key, value, updated_at) VALUES ($id, 'applications_open', $value, CURRENT_TIMESTAMP)",
+          { $id: crypto.randomUUID(), $value: applicationsOpen ? 'true' : 'false' });
+      }
+    }
+    
+    if (typeof applicationsLimit === 'number' && applicationsLimit >= 0) {
+      const existing = await getOne("SELECT id FROM settings WHERE key = 'applications_limit'");
+      if (existing) {
+        await run("UPDATE settings SET value = $value, updated_at = CURRENT_TIMESTAMP WHERE key = 'applications_limit'",
+          { $value: String(applicationsLimit) });
+      } else {
+        await run("INSERT INTO settings (id, key, value, updated_at) VALUES ($id, 'applications_limit', $value, CURRENT_TIMESTAMP)",
+          { $id: crypto.randomUUID(), $value: String(applicationsLimit) });
+      }
+    }
+    
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "settings.update",
+      targetType: "settings",
+      description: "تحديث إعدادات الطلبات",
+      metadata: { applicationsOpen, applicationsLimit }
+    });
+    
+    const settings = await getAll("SELECT * FROM settings ORDER BY key");
+    const settingsMap = {};
+    settings.forEach(setting => {
+      settingsMap[setting.key] = setting.value;
+    });
+    res.json({ settings: settingsMap });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.use((req, res) => {
   res.status(404).json({ message: "المسار غير موجود" });
 });
