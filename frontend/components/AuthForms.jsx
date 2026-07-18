@@ -76,6 +76,9 @@ router.push("/profile");
               </div>
             </label>
             <button className="submit-btn" type="submit">دخول</button>
+            <div className="forgot-password-link">
+              <a href="/forgot-password">نسيت كلمة المرور؟</a>
+            </div>
           </form>
         ) : (
           <form className="auth-form active" onSubmit={register}>

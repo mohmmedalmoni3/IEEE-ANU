@@ -1,6 +1,6 @@
 "use client";
 
-import { apiDelete, apiGet, apiPatch } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -71,6 +71,19 @@ export default function UsersAdminClient() {
       await apiDelete(`/users/${user.id}`);
       setUsers((items) => items.filter((item) => item.id !== user.id));
       setMessage("تم حذف المستخدم بنجاح.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function resetPassword(user) {
+    const ok = window.confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${user.email}؟`);
+    if (!ok) return;
+
+    setMessage("");
+    try {
+      await apiPost("/forgot-password", { email: user.email });
+      setMessage(`تم إرسال رابط إعادة تعيين كلمة المرور إلى ${user.email}`);
     } catch (error) {
       setMessage(error.message);
     }
@@ -155,6 +168,13 @@ export default function UsersAdminClient() {
                 onClick={() => updateRole(user.id, "member")}
               >
                 جعله عضو
+              </button>
+              <button
+                className="status-action"
+                type="button"
+                onClick={() => resetPassword(user)}
+              >
+                إعادة تعيين كلمة المرور
               </button>
               <button className="status-action delete" type="button" onClick={() => deleteUser(user)}>
                 حذف
