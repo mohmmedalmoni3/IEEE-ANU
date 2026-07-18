@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
-const fromEmail = process.env.MAIL_FROM || "IEEE ANU <onboarding@resend.dev>";
+const fromEmail = process.env.MAIL_FROM || "IEEE ANU <notifications@ieeeanu.app>";
 
 let resendClient = null;
 
@@ -45,11 +45,13 @@ export async function sendMail({ to, subject, text, html, requireDelivery = fals
     });
 
     if (error) {
+      console.error("[Resend API Error]", JSON.stringify(error, null, 2));
       throw new Error(error.message);
     }
 
     return data;
   } catch (error) {
+    console.error("[Resend Send Error]", error.message, error.stack);
     throw new Error(`فشل إرسال البريد: ${error.message}`);
   }
 }
@@ -85,12 +87,14 @@ export async function sendBatchEmails({ to, subject, text, html }) {
       });
 
       if (error) {
+        console.error("[Resend Batch API Error]", JSON.stringify(error, null, 2), "Batch:", batch);
         failedCount += batch.length;
         errors.push({ batch, error: error.message });
       } else {
         sentCount += batch.length;
       }
     } catch (error) {
+      console.error("[Resend Batch Send Error]", error.message, error.stack, "Batch:", batch);
       failedCount += batch.length;
       errors.push({ batch, error: error.message });
     }
