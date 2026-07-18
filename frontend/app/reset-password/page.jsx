@@ -1,12 +1,12 @@
 "use client";
 
-import { apiPost } from "@/lib/api";
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Eye, EyeOff, Lock } from "lucide-react";
+import { apiPost } from "@/lib/api";
 import PageShell from "@/components/PageShell";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -110,5 +110,13 @@ export default function ResetPasswordPage() {
         </div>
       </section>
     </PageShell>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div>جاري التحميل...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
