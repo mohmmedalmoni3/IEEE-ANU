@@ -1407,7 +1407,7 @@ app.post("/api/forgot-password", async (req, res, next) => {
       );
       
       // Send email
-      const resetUrl = `${process.env.FRONTEND_URL || 'https://ieeeanu.app'}/reset-password?token=${token}`;
+      const resetUrl = `${process.env.APP_BASE_URL || 'https://ieeeanu.app'}/reset-password?token=${token}`;
       
       try {
         await sendMail({
