@@ -1,4 +1,6 @@
-// نظام ردود ذكي يعتمد على الكلمات المفتاحية - بدون API خارجي
+const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY || "";
+// استخدام Together AI - مجاني للبداية مع نماذج قوية
+const TOGETHER_MODEL = "meta-llama/Llama-3-70b-chat-hf";
 
 const responses = {
   // ردود عامة
@@ -70,28 +72,52 @@ const responses = {
   }
 };
 
-function getKeywordResponse(text, type = "general") {
-  const lowerText = text.toLowerCase();
-  const category = responses[type] || responses.general;
-  
-  // البحث عن الكلمات المفتاحية
-  for (const [keyword, response] of Object.entries(category.keywords)) {
-    if (lowerText.includes(keyword)) {
-      return response;
+async function callTogetherAI(messages, maxTokens = 500) {
+  try {
+    if (!TOGETHER_API_KEY) {
+      console.error("TOGETHER_API_KEY is missing");
+      throw new Error("مفتاح Together AI مفقود");
     }
-  }
-  
-  // معالجة خاصة للأسئلة التي تبدأ بـ "من"
-  if (lowerText.startsWith("من ") || lowerText.includes(" من ")) {
-    // إذا كان السؤال عن الموقع أو المبرمج
-    if (lowerText.includes("موقع") || lowerText.includes("برمج") || 
-        lowerText.includes("صنع") || lowerText.includes("طور") ||
-        lowerText.includes("أنشأ") || lowerText.includes("صمم")) {
-      return "تم تطوير موقع IEEE ANU من قبل فريق تقني متخصص. إذا كنت مهتماً بالانضمام للفريق التقني، يمكنك التقديم من خلال صفحة التقديمات.";
+
+    const response = await fetch(
+      "https://api.together.xyz/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${TOGETHER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: TOGETHER_MODEL,
+          messages: messages,
+          max_tokens: maxTokens,
+          temperature: 0.7
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Together AI Error:", response.status, errorText);
+      throw new Error(`فشل الاتصال: ${response.status}`);
     }
+
+    const data = await response.json();
+    
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content || "";
+    }
+    
+    if (data.error) {
+      console.error("Together AI Error:", data.error);
+      throw new Error(data.error.message || "خطأ في API");
+    }
+    
+    return "";
+  } catch (error) {
+    console.error("Together AI Error:", error.message);
+    throw error;
   }
-  
-  return category.default;
 }
 
 const SYSTEM_PROMPTS = {
@@ -143,75 +169,57 @@ const SYSTEM_PROMPTS = {
 
 export async function chatWithAI(messages, type = "general") {
   try {
-    // الحصول على آخر رسالة من المستخدم
-    const lastMessage = messages[messages.length - 1]?.content || "";
+    const systemPrompt = SYSTEM_PROMPTS[type] || SYSTEM_PROMPTS.general;
     
-    // استخدام نظام الكلمات المفتاحية
-    const response = getKeywordResponse(lastMessage, type);
+    // Format messages for Together AI
+    const togetherMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
+    
+    const response = await callTogetherAI(togetherMessages, 500);
 
     return {
       success: true,
-      message: response
+      message: response || "حدث خطأ في معالجة الرد."
     };
   } catch (error) {
     console.error("AI Chat Error:", error);
     return {
       success: false,
-      message: "حدث خطأ في معالجة الرد."
+      message: "حدث خطأ في الاتصال بالذكاء الاصطناعي. حاول مرة أخرى لاحقاً."
     };
   }
 }
 
 export async function analyzeApplication(application) {
   try {
-    // تحليل بسيط بناءً على المعايير
-    let score = 0;
-    let reasons = [];
-    
-    // تقييم الخبرة
-    if (application.experience && application.experience.length > 20) {
-      score += 20;
-      reasons.push("خبرة جيدة");
-    }
-    
-    // تقييم المهارات
-    if (application.skills && application.skills.length >= 2) {
-      score += 25;
-      reasons.push("مهارات متنوعة");
-    }
-    
-    // تقييم الساعات
-    if (application.hours && parseInt(application.hours) >= 5) {
-      score += 20;
-      reasons.push("توفر وقت كافٍ");
-    }
-    
-    // تقييم الدافع
-    if (application.whyJoin && application.whyJoin.length > 30) {
-      score += 20;
-      reasons.push("دافع واضح");
-    }
-    
-    // تحديد التوصية
-    let recommendation = "مقبول";
-    if (score < 40) {
-      recommendation = "مرفوض";
-    } else if (score < 60) {
-      recommendation = "بحاجة لمقابلة";
-    }
-    
-    const analysis = `التقييم: ${score}/100
-الأسباب الإيجابية: ${reasons.join(", ") || "لا توجد"}
-التوصية: ${recommendation}
+    const prompt = `${SYSTEM_PROMPTS.application_analysis}
+
+حلل هذا الطلب للانضمام:
 
 الاسم: ${application.fullName}
-البريد: ${application.universityEmail}
+البريد الجامعي: ${application.universityEmail}
 العمر: ${application.age}
-البلد: ${application.country}`;
+البلد: ${application.country}
+الساعات المتاحة: ${application.hours}
+الخبرة: ${application.experience}
+لماذا يريد الانضمام: ${application.whyJoin}
+المهارات: ${application.skills.join(", ")}
+طريقة المعرفة: ${application.referral || "غير محدد"}
+
+قدم تقييماً وتوصية (مقبول/مرفوض/بحاجة لمقابلة) مع شرح مختصر.`;
+
+    const togetherMessages = [
+      { role: "system", content: SYSTEM_PROMPTS.application_analysis },
+      { role: "user", content: prompt }
+    ];
+
+    const response = await callTogetherAI(togetherMessages, 400);
 
     return {
       success: true,
-      analysis: analysis
+      analysis: response || "حدث خطأ في تحليل الطلب."
     };
   } catch (error) {
     console.error("AI Analysis Error:", error);
@@ -224,21 +232,26 @@ export async function analyzeApplication(application) {
 
 export async function getAdminInsights(data) {
   try {
-    // تحليل بسيط للبيانات
-    const insights = `تحليل البيانات الحالية:
-- عدد المستخدمين: ${data.usersCount || 0}
-- عدد الطلبات: ${data.applicationsCount || 0}
-- الطلبات المعلقة: ${data.pendingApplications || 0}
+    const prompt = `${SYSTEM_PROMPTS.admin}
 
-التوصيات:
-1. إذا كان عدد الطلبات المعلقة عالٍ (>5): يُنصح بمراجعة الطلبات وتسريع عملية القرار.
-2. إذا كان عدد المستخدمين منخفضاً: يُنصح بزيادة التسويق والفعاليات.
-3. يُنصح بتنظيم ورش عمل دورية لجذب المزيد من الأعضاء.
-4. يُنصح بتحديث المحتوى التقني بانتظام.`;
+حلل هذه البيانات من لوحة الإدارة:
+
+عدد المستخدمين: ${data.usersCount}
+عدد الطلبات: ${data.applicationsCount}
+الطلبات المعلقة:${data.pendingApplications}
+
+قدم رؤى وتوصيات لتحسين الأداء.`;
+
+    const togetherMessages = [
+      { role: "system", content: SYSTEM_PROMPTS.admin },
+      { role: "user", content: prompt }
+    ];
+
+    const response = await callTogetherAI(togetherMessages, 400);
 
     return {
       success: true,
-      insights: insights
+      insights: response || "حدث خطأ في تحليل البيانات."
     };
   } catch (error) {
     console.error("AI Insights Error:", error);
