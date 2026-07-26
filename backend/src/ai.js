@@ -1,6 +1,75 @@
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-// استخدام Groq API - أسرع ومجاني للاستخدام الأساسي
-const GROQ_MODEL = "llama3-8b-8192";
+// نظام ردود ذكي يعتمد على الكلمات المفتاحية - بدون API خارجي
+
+const responses = {
+  // ردود عامة
+  general: {
+    keywords: {
+      "مرحبا": "أهلاً وسهلاً! أنا مساعد IEEE ANU الذكي. كيف يمكنني مساعدتك اليوم؟",
+      "السلام": "وعليكم السلام ورحمة الله وبركاته! أنا هنا لمساعدتك في أي سؤال عن IEEE ANU.",
+      "من أنت": "أنا مساعد ذكي لفرع IEEE ANU الطلابي. مهمتي مساعدتك في معرفة المزيد عن الفرع وخدماته.",
+      "ما هو": "IEEE ANU هو فرع طلابي لمعهد المهندسين الكهربائيين والإلكترونيين في جامعة عجلون الوطنية.",
+      "ieee": "IEEE هو أكبر منظمة تقنية في العالم تهدف لتطوير التكنولوجيا والعلوم.",
+      "عجلون": "IEEE ANU هو فرع IEEE في جامعة عجلون الوطنية في الأردن.",
+      "انضم": "للانضمام إلى IEEE ANU، يمكنك تقديم طلب من خلال صفحة التقديمات في موقعنا.",
+      "تقديم": "يمكنك تقديم طلب الانضمام من خلال صفحة التقديمات. ستحتاج لملء بياناتك ومهاراتك.",
+      "عضو": "للتسجيل كعضو، قم بإنشاء حساب ثم قدم طلب انضمام من خلال الموقع.",
+      "ورشة": "ننظم ورش عمل دورية في مختلف المجالات التقنية. تابع صفحتنا للتعرف عن الورش القادمة.",
+      "فعالية": "ننظم فعاليات تقنية واجتماعية للطلاب. يمكنك الاطلاع عليها في الموقع.",
+      "مجاني": "عضوية IEEE ANU مجانية للطلاب المقبولين!",
+      "رسوم": "لا توجد رسوم للعضوية في IEEE ANU.",
+      "تواصل": "يمكنك التواصل معنا عبر البريد الإلكتروني أو حساباتنا على وسائل التواصل الاجتماعي.",
+      "اتصل": "يمكنك التواصل معنا عبر البريد: ieeeanusupport@gmail.com",
+      "بريد": "بريد التواصل: ieeeanusupport@gmail.com",
+      "إنستقرام": "تابعنا على إنستقرام: @ieee_anu",
+      "فيسبوك": "تابعنا على فيسبوك للتعرف عن أخبارنا.",
+      "مهارة": "نبحث عن مهارات متنوعة: برمجة، تصميم، إدارة محتوى، تنظيم، وغيرها.",
+      "برمجة": "نحتاج مطورين في مختلف اللغات: JavaScript, Python, وغيرها.",
+      "تصميم": "نحتاج مصممين جرافيك وUI/UX.",
+      "محتوى": "نحتاج منشئي محتوى تقني ومترجمين.",
+      "شكر": "على الرحب والسعة! أنا هنا دائماً لمساعدتك.",
+      "شكرا": "شكراً لك! إذا احتجت أي مساعدة أخرى، أنا هنا.",
+      "مساعدة": "بالتأكيد! كيف يمكنني مساعدتك؟",
+      "سؤال": "تفضل، اسأل أي سؤال عن IEEE ANU وسأجيبك.",
+      "مشروع": "نقدم فرصاً للمشاركة في مشاريع تقنية حقيقية.",
+      "تدريب": "نقدم ورش عمل تدريبية لتطوير مهاراتك.",
+      "تعلم": "IEEE ANU بيئة ممتازة للتعلم والتطوير المهني.",
+      "فريق": "نحن فريق من الطلاب الشغوفين بالتكنولوجيا.",
+      "هدف": "هدفنا تطوير مهارات الطلاب وتعزيز المجتمع التقني.",
+      "رئيس": "يمكنك معرفة فريق الإدارة من خلال صفحة من نحن.",
+      "قائد": "يمكنك معرفة قادة الفريق من خلال صفحة من نحن.",
+      "قوانين": "قوانين IEEE ANU متاحة في صفحة القوانين في الموقع.",
+      "قانون": "يرجى قراءة قوانين الفرع قبل التقديم من صفحة القوانين.",
+      "موقع": "موقعنا الرسمي يحتوي على كل المعلومات عن IEEE ANU.",
+      "رابط": "يمكنك العثور على جميع روابطنا في صفحة من نحن."
+    },
+    default: "شكراً لتواصلك مع IEEE ANU! يمكنني مساعدتك في الأسئلة عن الفرع، التقديمات، الورش، والفعاليات. كيف يمكنني مساعدتك؟"
+  },
+  
+  // ردود تحليل الطلبات
+  application_analysis: {
+    keywords: {},
+    default: "بناءً على المعلومات المقدمة، يبدو أن المرشح لديه إمكانيات جيدة. يُنصح بإجراء مقابلة لتقييم المهارات والالتزام بشكل أفضل."
+  },
+  
+  // ردود الإدارة
+  admin: {
+    keywords: {},
+    default: "بناءً على البيانات الحالية، يُنصح بالتركيز على زيادة التسويق لجذب المزيد من الأعضاء وتنويع الورش العملية."
+  }
+};
+
+function getKeywordResponse(text, type = "general") {
+  const lowerText = text.toLowerCase();
+  const category = responses[type] || responses.general;
+  
+  for (const [keyword, response] of Object.entries(category.keywords)) {
+    if (lowerText.includes(keyword)) {
+      return response;
+    }
+  }
+  
+  return category.default;
+}
 
 const SYSTEM_PROMPTS = {
   general: `أنت مساعد ذكي لفرع IEEE ANU. مهمتك مساعدة المستخدمين بطريقة ودية ومهنية.
@@ -49,107 +118,77 @@ const SYSTEM_PROMPTS = {
 - كن عادلاً وموضوعياً`
 };
 
-async function callGroqAPI(messages, maxTokens = 500) {
-  try {
-    if (!GROQ_API_KEY) {
-      console.error("GROQ_API_KEY is missing");
-      throw new Error("مفتاح Groq API مفقود");
-    }
-
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: GROQ_MODEL,
-          messages: messages,
-          max_tokens: maxTokens,
-          temperature: 0.7
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Groq API Error:", response.status, errorText);
-      throw new Error(`فشل الاتصال: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content || "";
-    }
-    
-    if (data.error) {
-      console.error("Groq Error:", data.error);
-      throw new Error(data.error.message || "خطأ في API");
-    }
-    
-    return "";
-  } catch (error) {
-    console.error("Groq API Error:", error.message);
-    throw error;
-  }
-}
-
 export async function chatWithAI(messages, type = "general") {
   try {
-    const systemPrompt = SYSTEM_PROMPTS[type] || SYSTEM_PROMPTS.general;
+    // الحصول على آخر رسالة من المستخدم
+    const lastMessage = messages[messages.length - 1]?.content || "";
     
-    // Format messages for Groq API
-    const groqMessages = [
-      { role: "system", content: systemPrompt },
-      ...messages
-    ];
-    
-    const response = await callGroqAPI(groqMessages, 500);
+    // استخدام نظام الكلمات المفتاحية
+    const response = getKeywordResponse(lastMessage, type);
 
     return {
       success: true,
-      message: response || "حدث خطأ في معالجة الرد."
+      message: response
     };
   } catch (error) {
     console.error("AI Chat Error:", error);
     return {
       success: false,
-      message: "حدث خطأ في الاتصال بالذكاء الاصطناعي. حاول مرة أخرى لاحقاً."
+      message: "حدث خطأ في معالجة الرد."
     };
   }
 }
 
 export async function analyzeApplication(application) {
   try {
-    const prompt = `${SYSTEM_PROMPTS.application_analysis}
-
-حلل هذا الطلب للانضمام:
+    // تحليل بسيط بناءً على المعايير
+    let score = 0;
+    let reasons = [];
+    
+    // تقييم الخبرة
+    if (application.experience && application.experience.length > 20) {
+      score += 20;
+      reasons.push("خبرة جيدة");
+    }
+    
+    // تقييم المهارات
+    if (application.skills && application.skills.length >= 2) {
+      score += 25;
+      reasons.push("مهارات متنوعة");
+    }
+    
+    // تقييم الساعات
+    if (application.hours && parseInt(application.hours) >= 5) {
+      score += 20;
+      reasons.push("توفر وقت كافٍ");
+    }
+    
+    // تقييم الدافع
+    if (application.whyJoin && application.whyJoin.length > 30) {
+      score += 20;
+      reasons.push("دافع واضح");
+    }
+    
+    // تحديد التوصية
+    let recommendation = "مقبول";
+    if (score < 40) {
+      recommendation = "مرفوض";
+    } else if (score < 60) {
+      recommendation = "بحاجة لمقابلة";
+    }
+    
+    const analysis = `التقييم: ${score}/100
+الأسباب الإيجابية: ${reasons.join(", ") || "لا توجد"}
+التوصية: ${recommendation}
 
 الاسم: ${application.fullName}
-البريد الجامعي: ${application.universityEmail}
+البريد: ${application.universityEmail}
 العمر: ${application.age}
-البلد: ${application.country}
-الساعات المتاحة: ${application.hours}
-الخبرة: ${application.experience}
-لماذا يريد الانضمام: ${application.whyJoin}
-المهارات: ${application.skills.join(", ")}
-طريقة المعرفة: ${application.referral || "غير محدد"}
-
-قدم تقييماً وتوصية (مقبول/مرفوض/بحاجة لمقابلة) مع شرح مختصر.`;
-
-    const groqMessages = [
-      { role: "system", content: SYSTEM_PROMPTS.application_analysis },
-      { role: "user", content: prompt }
-    ];
-
-    const response = await callGroqAPI(groqMessages, 400);
+البلد: ${application.country}`;
 
     return {
       success: true,
-      analysis: response || "حدث خطأ في تحليل الطلب."
+      analysis: analysis
     };
   } catch (error) {
     console.error("AI Analysis Error:", error);
@@ -162,26 +201,21 @@ export async function analyzeApplication(application) {
 
 export async function getAdminInsights(data) {
   try {
-    const prompt = `${SYSTEM_PROMPTS.admin}
+    // تحليل بسيط للبيانات
+    const insights = `تحليل البيانات الحالية:
+- عدد المستخدمين: ${data.usersCount || 0}
+- عدد الطلبات: ${data.applicationsCount || 0}
+- الطلبات المعلقة: ${data.pendingApplications || 0}
 
-حلل هذه البيانات من لوحة الإدارة:
-
-عدد المستخدمين: ${data.usersCount}
-عدد الطلبات: ${data.applicationsCount}
-الطلبات المعلقة: ${data.pendingApplications}
-
-قدم رؤى وتوصيات لتحسين الأداء.`;
-
-    const groqMessages = [
-      { role: "system", content: SYSTEM_PROMPTS.admin },
-      { role: "user", content: prompt }
-    ];
-
-    const response = await callGroqAPI(groqMessages, 400);
+التوصيات:
+1. إذا كان عدد الطلبات المعلقة عالٍ (>5): يُنصح بمراجعة الطلبات وتسريع عملية القرار.
+2. إذا كان عدد المستخدمين منخفضاً: يُنصح بزيادة التسويق والفعاليات.
+3. يُنصح بتنظيم ورش عمل دورية لجذب المزيد من الأعضاء.
+4. يُنصح بتحديث المحتوى التقني بانتظام.`;
 
     return {
       success: true,
-      insights: response || "حدث خطأ في تحليل البيانات."
+      insights: insights
     };
   } catch (error) {
     console.error("AI Insights Error:", error);
