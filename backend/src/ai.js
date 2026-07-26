@@ -1,6 +1,6 @@
-const HF_API_KEY = process.env.HF_API_KEY || "";
-// استخدام نموذج أصغر وأكثر استقراراً للاستخدام المجاني
-const HF_MODEL = "microsoft/DialoGPT-medium";
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+// استخدام Groq API - أسرع ومجاني للاستخدام الأساسي
+const GROQ_MODEL = "llama3-8b-8192";
 
 const SYSTEM_PROMPTS = {
   general: `أنت مساعد ذكي لفرع IEEE ANU. مهمتك مساعدة المستخدمين بطريقة ودية ومهنية.
@@ -49,52 +49,50 @@ const SYSTEM_PROMPTS = {
 - كن عادلاً وموضوعياً`
 };
 
-async function callHuggingFaceAPI(prompt, maxTokens = 500) {
+async function callGroqAPI(messages, maxTokens = 500) {
   try {
-    if (!HF_API_KEY) {
-      console.error("HF_API_KEY is missing");
-      throw new Error("مفتاح Hugging Face API مفقود");
+    if (!GROQ_API_KEY) {
+      console.error("GROQ_API_KEY is missing");
+      throw new Error("مفتاح Groq API مفقود");
     }
 
     const response = await fetch(
-      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
+          Authorization: `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: maxTokens,
-            temperature: 0.7,
-            return_full_text: false
-          }
+          model: GROQ_MODEL,
+          messages: messages,
+          max_tokens: maxTokens,
+          temperature: 0.7
         })
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Hugging Face API Error:", response.status, errorText);
+      console.error("Groq API Error:", response.status, errorText);
       throw new Error(`فشل الاتصال: ${response.status}`);
     }
 
     const data = await response.json();
     
-    if (Array.isArray(data) && data.length > 0) {
-      return data[0].generated_text || "";
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content || "";
     }
     
     if (data.error) {
-      console.error("Hugging Face Error:", data.error);
-      throw new Error(data.error);
+      console.error("Groq Error:", data.error);
+      throw new Error(data.error.message || "خطأ في API");
     }
     
     return "";
   } catch (error) {
-    console.error("Hugging Face API Error:", error.message);
+    console.error("Groq API Error:", error.message);
     throw error;
   }
 }
@@ -103,17 +101,13 @@ export async function chatWithAI(messages, type = "general") {
   try {
     const systemPrompt = SYSTEM_PROMPTS[type] || SYSTEM_PROMPTS.general;
     
-    // Format messages for Hugging Face
-    const conversationHistory = messages.map(msg => {
-      if (msg.role === "user") {
-        return `[INST] ${msg.content} [/INST]`;
-      }
-      return msg.content;
-    }).join("\n");
-
-    const prompt = `${systemPrompt}\n\n${conversationHistory}`;
+    // Format messages for Groq API
+    const groqMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
     
-    const response = await callHuggingFaceAPI(prompt, 500);
+    const response = await callGroqAPI(groqMessages, 500);
 
     return {
       success: true,
@@ -146,7 +140,12 @@ export async function analyzeApplication(application) {
 
 قدم تقييماً وتوصية (مقبول/مرفوض/بحاجة لمقابلة) مع شرح مختصر.`;
 
-    const response = await callHuggingFaceAPI(prompt, 400);
+    const groqMessages = [
+      { role: "system", content: SYSTEM_PROMPTS.application_analysis },
+      { role: "user", content: prompt }
+    ];
+
+    const response = await callGroqAPI(groqMessages, 400);
 
     return {
       success: true,
@@ -173,7 +172,12 @@ export async function getAdminInsights(data) {
 
 قدم رؤى وتوصيات لتحسين الأداء.`;
 
-    const response = await callHuggingFaceAPI(prompt, 400);
+    const groqMessages = [
+      { role: "system", content: SYSTEM_PROMPTS.admin },
+      { role: "user", content: prompt }
+    ];
+
+    const response = await callGroqAPI(groqMessages, 400);
 
     return {
       success: true,
