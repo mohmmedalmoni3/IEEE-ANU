@@ -1,11 +1,8 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const HF_API_KEY = process.env.HF_API_KEY;
+const HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2";
 
 const SYSTEM_PROMPTS = {
-  general: `أنت مساعد ذكي لفرع IEEE ANU. مهمتك مساعدة المستخدمين بطريقة ودودة ومهنية.
+  general: `أنت مساعد ذكي لفرع IEEE ANU. مهمتك مساعدة المستخدمين بطريقة ودية ومهنية.
 
 المعلومات عن IEEE ANU:
 - IEEE ANU هو فرع لمعهد المهندسين الكهربائيين والإلكترونيين
@@ -51,26 +48,68 @@ const SYSTEM_PROMPTS = {
 - كن عادلاً وموضوعياً`
 };
 
+async function callHuggingFaceAPI(prompt, maxTokens = 500) {
+  try {
+    const response = await fetch(
+      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: maxTokens,
+            temperature: 0.7,
+            return_full_text: false
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("Hugging Face API Error:", error);
+      throw new Error("فشل الاتصال بالذكاء الاصطناعي");
+    }
+
+    const data = await response.json();
+    
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0].generated_text || "";
+    }
+    
+    return "";
+  } catch (error) {
+    console.error("Hugging Face API Error:", error);
+    throw error;
+  }
+}
+
 export async function chatWithAI(messages, type = "general") {
   try {
     const systemPrompt = SYSTEM_PROMPTS[type] || SYSTEM_PROMPTS.general;
     
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages
-      ],
-      max_tokens: 500,
-      temperature: 0.7
-    });
+    // Format messages for Hugging Face
+    const conversationHistory = messages.map(msg => {
+      if (msg.role === "user") {
+        return `[INST] ${msg.content} [/INST]`;
+      }
+      return msg.content;
+    }).join("\n");
+
+    const prompt = `${systemPrompt}\n\n${conversationHistory}`;
+    
+    const response = await callHuggingFaceAPI(prompt, 500);
 
     return {
       success: true,
-      message: response.choices[0].message.content
+      message: response || "حدث خطأ في معالجة الرد."
     };
   } catch (error) {
-    console.error("OpenAI API Error:", error);
+    console.error("AI Chat Error:", error);
     return {
       success: false,
       message: "حدث خطأ في الاتصال بالذكاء الاصطناعي. حاول مرة أخرى لاحقاً."
@@ -80,7 +119,9 @@ export async function chatWithAI(messages, type = "general") {
 
 export async function analyzeApplication(application) {
   try {
-    const prompt = `حلل هذا الطلب للانضمام:
+    const prompt = `${SYSTEM_PROMPTS.application_analysis}
+
+حلل هذا الطلب للانضمام:
 
 الاسم: ${application.fullName}
 البريد الجامعي: ${application.universityEmail}
@@ -94,22 +135,14 @@ export async function analyzeApplication(application) {
 
 قدم تقييماً وتوصية (مقبول/مرفوض/بحاجة لمقابلة) مع شرح مختصر.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPTS.application_analysis },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 400,
-      temperature: 0.5
-    });
+    const response = await callHuggingFaceAPI(prompt, 400);
 
     return {
       success: true,
-      analysis: response.choices[0].message.content
+      analysis: response || "حدث خطأ في تحليل الطلب."
     };
   } catch (error) {
-    console.error("OpenAI API Error:", error);
+    console.error("AI Analysis Error:", error);
     return {
       success: false,
       analysis: "حدث خطأ في تحليل الطلب."
@@ -119,7 +152,9 @@ export async function analyzeApplication(application) {
 
 export async function getAdminInsights(data) {
   try {
-    const prompt = `حلل هذه البيانات من لوحة الإدارة:
+    const prompt = `${SYSTEM_PROMPTS.admin}
+
+حلل هذه البيانات من لوحة الإدارة:
 
 عدد المستخدمين: ${data.usersCount}
 عدد الطلبات: ${data.applicationsCount}
@@ -127,22 +162,14 @@ export async function getAdminInsights(data) {
 
 قدم رؤى وتوصيات لتحسين الأداء.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPTS.admin },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 400,
-      temperature: 0.6
-    });
+    const response = await callHuggingFaceAPI(prompt, 400);
 
     return {
       success: true,
-      insights: response.choices[0].message.content
+      insights: response || "حدث خطأ في تحليل البيانات."
     };
   } catch (error) {
-    console.error("OpenAI API Error:", error);
+    console.error("AI Insights Error:", error);
     return {
       success: false,
       insights: "حدث خطأ في تحليل البيانات."
