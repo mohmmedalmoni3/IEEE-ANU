@@ -1,7 +1,7 @@
 "use client";
 
 import { apiGet } from "@/lib/api";
-import { Bot, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,8 +13,7 @@ const links = [
   { href: "/laws", label: "القوانين" },
   { href: "/creators", label: "صناع المحتوى" },
   { href: "/applications", label: "التقديمات" },
-  { href: "/store", label: "المتجر" },
-  { href: "/ai-chat", label: "المساعد الذكي", icon: Bot }
+  { href: "/store", label: "المتجر" }
 ];
 
 const adminLinks = [
@@ -66,7 +65,6 @@ export default function Navbar() {
           {links.map((link) => (
             <li key={link.href}>
               <Link className={pathname === link.href ? "active" : ""} href={link.href} onClick={() => setOpen(false)}>
-                {link.icon && <link.icon size={18} style={{ marginLeft: "6px" }} />}
                 {link.label}
               </Link>
             </li>
