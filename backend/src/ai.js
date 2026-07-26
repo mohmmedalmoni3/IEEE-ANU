@@ -1,5 +1,6 @@
 const HF_API_KEY = process.env.HF_API_KEY || "";
-const HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2";
+// استخدام نموذج أصغر وأكثر استقراراً للاستخدام المجاني
+const HF_MODEL = "microsoft/DialoGPT-medium";
 
 const SYSTEM_PROMPTS = {
   general: `أنت مساعد ذكي لفرع IEEE ANU. مهمتك مساعدة المستخدمين بطريقة ودية ومهنية.
@@ -50,6 +51,11 @@ const SYSTEM_PROMPTS = {
 
 async function callHuggingFaceAPI(prompt, maxTokens = 500) {
   try {
+    if (!HF_API_KEY) {
+      console.error("HF_API_KEY is missing");
+      throw new Error("مفتاح Hugging Face API مفقود");
+    }
+
     const response = await fetch(
       `https://api-inference.huggingface.co/models/${HF_MODEL}`,
       {
@@ -70,9 +76,9 @@ async function callHuggingFaceAPI(prompt, maxTokens = 500) {
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error("Hugging Face API Error:", error);
-      throw new Error("فشل الاتصال بالذكاء الاصطناعي");
+      const errorText = await response.text();
+      console.error("Hugging Face API Error:", response.status, errorText);
+      throw new Error(`فشل الاتصال: ${response.status}`);
     }
 
     const data = await response.json();
@@ -81,9 +87,14 @@ async function callHuggingFaceAPI(prompt, maxTokens = 500) {
       return data[0].generated_text || "";
     }
     
+    if (data.error) {
+      console.error("Hugging Face Error:", data.error);
+      throw new Error(data.error);
+    }
+    
     return "";
   } catch (error) {
-    console.error("Hugging Face API Error:", error);
+    console.error("Hugging Face API Error:", error.message);
     throw error;
   }
 }
