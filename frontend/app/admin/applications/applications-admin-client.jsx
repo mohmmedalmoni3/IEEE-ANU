@@ -1,8 +1,9 @@
 "use client";
 
-import { apiDelete, apiGet, apiPatch } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Bot } from "lucide-react";
 
 const statuses = ["قيد المراجعة", "مقبول", "مرفوض", "بحاجة لمقابلة", "إعادة المقابلة"];
 
@@ -34,6 +35,8 @@ export default function ApplicationsAdminClient() {
   const [showSettings, setShowSettings] = useState(false);
   const [applicationsOpen, setApplicationsOpen] = useState(true);
   const [applicationsLimit, setApplicationsLimit] = useState(0);
+  const [analyzingId, setAnalyzingId] = useState(null);
+  const [aiAnalysis, setAiAnalysis] = useState({});
 
   useEffect(() => {
     Promise.all([
@@ -134,6 +137,24 @@ export default function ApplicationsAdminClient() {
       setShowSettings(false);
     } catch (error) {
       setMessage(error.message);
+    }
+  }
+
+  async function analyzeWithAI(applicationId) {
+    setAnalyzingId(applicationId);
+    setMessage("");
+    try {
+      const data = await apiPost("/ai/analyze-application", { applicationId });
+      if (data.success) {
+        setAiAnalysis((prev) => ({ ...prev, [applicationId]: data.analysis }));
+        setMessage("تم تحليل الطلب بنجاح.");
+      } else {
+        setMessage(data.analysis || "حدث خطأ في التحليل.");
+      }
+    } catch (error) {
+      setMessage(error.message || "حدث خطأ في الاتصال بالذكاء الاصطناعي.");
+    } finally {
+      setAnalyzingId(null);
     }
   }
 
@@ -307,6 +328,25 @@ export default function ApplicationsAdminClient() {
                   <div className="long-answer">
                     <strong>سبب الانضمام</strong>
                     <p>{application.whyJoin}</p>
+                  </div>
+
+                  <div className="ai-analysis-section">
+                    <div className="ai-analysis-header">
+                      <strong>تحليل الذكاء الاصطناعي</strong>
+                      <button
+                        className="btn btn-secondary"
+                        type="button"
+                        onClick={() => analyzeWithAI(application.id)}
+                        disabled={analyzingId === application.id}
+                      >
+                        {analyzingId === application.id ? "جاري التحليل..." : <><Bot size={16} style={{ marginLeft: "8px" }} /> تحليل بالذكاء الاصطناعي</>}
+                      </button>
+                    </div>
+                    {aiAnalysis[application.id] && (
+                      <div className="ai-analysis-content">
+                        {aiAnalysis[application.id]}
+                      </div>
+                    )}
                   </div>
 
                   <label className="admin-note-field">

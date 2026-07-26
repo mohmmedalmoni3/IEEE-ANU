@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import express from "express";
 import { databaseProvider, getAll, getOne, initDb, run } from "./db.js";
 import { notifyAdminsNewApplication, notifyApplicantStatus, sendMail, sendBatchEmails, verifyMailTransport } from "./mailer.js";
+import { analyzeApplication, chatWithAI, getAdminInsights } from "./ai.js";
 
 dotenv.config();
 await initDb();
@@ -1504,6 +1505,78 @@ app.post("/api/reset-password", async (req, res, next) => {
     });
     
     res.json({ message: "تم إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// AI Chat Endpoint - للجميع
+app.post("/api/ai/chat", async (req, res, next) => {
+  try {
+    const { messages } = req.body;
+    
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ message: "الرسائل غير صالحة" });
+    }
+
+    const result = await chatWithAI(messages, "general");
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// AI Chat for Admin - للإدارة فقط
+app.post("/api/ai/admin/chat", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { messages } = req.body;
+    
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ message: "الرسائل غير صالحة" });
+    }
+
+    const result = await chatWithAI(messages, "admin");
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// AI Application Analysis - للإدارة فقط
+app.post("/api/ai/analyze-application", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { applicationId } = req.body;
+    
+    if (!applicationId) {
+      return res.status(400).json({ message: "معرف الطلب مطلوب" });
+    }
+
+    const application = await getOne("SELECT * FROM applications WHERE id = $id", { $id: applicationId });
+    if (!application) {
+      return res.status(404).json({ message: "الطلب غير موجود" });
+    }
+
+    const parsedApplication = parseApplication(application);
+    const result = await analyzeApplication(parsedApplication);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// AI Admin Insights - للإدارة فقط
+app.post("/api/ai/admin-insights", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const usersCount = (await getOne("SELECT COUNT(*) AS count FROM users"))?.count || 0;
+    const applicationsCount = (await getOne("SELECT COUNT(*) AS count FROM applications"))?.count || 0;
+    const pendingApplications = (await getOne("SELECT COUNT(*) AS count FROM applications WHERE status = $status", { $status: "قيد المراجعة" }))?.count || 0;
+
+    const result = await getAdminInsights({
+      usersCount,
+      applicationsCount,
+      pendingApplications
+    });
+    res.json(result);
   } catch (error) {
     next(error);
   }

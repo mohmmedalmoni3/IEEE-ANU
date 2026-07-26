@@ -1,4 +1,5 @@
 import "./globals.css";
+import AIChatWidget from "@/components/AIChatWidget";
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
@@ -27,7 +28,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl">
-      <body>{children}</body>
+      <body>
+        {children}
+        <AIChatWidget />
+      </body>
     </html>
   );
 }
