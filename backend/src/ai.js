@@ -1,6 +1,7 @@
 const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY || "";
 // استخدام Together AI - مجاني للبداية مع نماذج قوية
 const TOGETHER_MODEL = "meta-llama/Llama-3-70b-chat-hf";
+const USE_AI_FALLBACK = true; // العودة للكلمات المفتاحية إذا فشل AI
 
 const responses = {
   // ردود عامة
@@ -185,6 +186,19 @@ export async function chatWithAI(messages, type = "general") {
     };
   } catch (error) {
     console.error("AI Chat Error:", error);
+    
+    // العودة للكلمات المفتاحية إذا فشل AI
+    if (USE_AI_FALLBACK) {
+      console.log("Falling back to keyword responses");
+      const lastMessage = messages[messages.length - 1]?.content || "";
+      const fallbackResponse = getKeywordResponse(lastMessage, type);
+      
+      return {
+        success: true,
+        message: fallbackResponse
+      };
+    }
+    
     return {
       success: false,
       message: "حدث خطأ في الاتصال بالذكاء الاصطناعي. حاول مرة أخرى لاحقاً."
