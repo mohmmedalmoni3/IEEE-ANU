@@ -19,6 +19,7 @@ const links = [
 const adminLinks = [
   { href: "/admin/applications", label: "إدارة الطلبات" },
   { href: "/admin/users", label: "إدارة المستخدمين" },
+  { href: "/admin/events", label: "إدارة الأحداث" },
   { href: "/admin/messages", label: "رسائل المستخدمين" },
   { href: "/admin/notifications", label: "التنبيهات" },
   { href: "/admin/activity", label: "سجل النشاط" },
