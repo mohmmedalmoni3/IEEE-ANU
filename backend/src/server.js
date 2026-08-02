@@ -1297,7 +1297,7 @@ app.get("/api/settings", async (req, res, next) => {
 app.get("/api/applications/count", async (req, res, next) => {
   try {
     const result = await getOne(
-      `SELECT COUNT(*) as count FROM applications 
+      `SELECT COUNT(*) as count FROM applications
        WHERE status IN ('قيد المراجعة', 'بحاجة لمقابلة', 'إعادة المقابلة')`
     );
     res.json({ count: result?.count || 0 });
@@ -1305,6 +1305,148 @@ app.get("/api/applications/count", async (req, res, next) => {
     next(error);
   }
 });
+
+// Events API endpoints
+app.get("/api/events", async (req, res, next) => {
+  try {
+    const events = await getAll("SELECT * FROM events WHERE is_active = 1 ORDER BY event_date ASC");
+    res.json({ events: events.map(parseEvent) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/events/:id", async (req, res, next) => {
+  try {
+    const event = await getOne("SELECT * FROM events WHERE id = $id", { $id: req.params.id });
+    if (!event) return res.status(404).json({ message: "الحدث غير موجود" });
+    res.json({ event: parseEvent(event) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/events", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { title, description, eventDate, location } = req.body;
+    
+    if (!title || !eventDate) {
+      return res.status(400).json({ message: "العنوان وتاريخ الحدث مطلوبان" });
+    }
+    
+    const id = crypto.randomUUID();
+    await run(
+      `INSERT INTO events (id, title, description, event_date, location, is_active, created_at, updated_at)
+       VALUES ($id, $title, $description, $eventDate, $location, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      { $id: id, $title: cleanText(title, 200), $description: cleanText(description, 2000), $eventDate: eventDate, $location: cleanText(location, 200) || null }
+    );
+    
+    const event = await getOne("SELECT * FROM events WHERE id = $id", { $id: id });
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "event.create",
+      targetType: "event",
+      targetId: id,
+      description: `إنشاء حدث جديد: ${title}`,
+      metadata: { title, eventDate, location }
+    });
+    
+    res.status(201).json({ event: parseEvent(event) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/events/:id", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { title, description, eventDate, location, isActive } = req.body;
+    
+    const existing = await getOne("SELECT * FROM events WHERE id = $id", { $id: req.params.id });
+    if (!existing) return res.status(404).json({ message: "الحدث غير موجود" });
+    
+    const updates = [];
+    const params = { $id: req.params.id };
+    
+    if (title !== undefined) {
+      updates.push("title = $title");
+      params.$title = cleanText(title, 200);
+    }
+    if (description !== undefined) {
+      updates.push("description = $description");
+      params.$description = cleanText(description, 2000);
+    }
+    if (eventDate !== undefined) {
+      updates.push("event_date = $eventDate");
+      params.$eventDate = eventDate;
+    }
+    if (location !== undefined) {
+      updates.push("location = $location");
+      params.$location = cleanText(location, 200) || null;
+    }
+    if (isActive !== undefined) {
+      updates.push("is_active = $isActive");
+      params.$isActive = isActive ? 1 : 0;
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "لا توجد تحديثات" });
+    }
+    
+    updates.push("updated_at = CURRENT_TIMESTAMP");
+    
+    await run(
+      `UPDATE events SET ${updates.join(", ")} WHERE id = $id`,
+      params
+    );
+    
+    const event = await getOne("SELECT * FROM events WHERE id = $id", { $id: req.params.id });
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "event.update",
+      targetType: "event",
+      targetId: req.params.id,
+      description: "تحديث الحدث",
+      metadata: { title, eventDate, location, isActive }
+    });
+    
+    res.json({ event: parseEvent(event) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.delete("/api/events/:id", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const event = await getOne("SELECT id, title FROM events WHERE id = $id", { $id: req.params.id });
+    if (!event) return res.status(404).json({ message: "الحدث غير موجود" });
+    
+    await run("DELETE FROM events WHERE id = $id", { $id: req.params.id });
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "event.delete",
+      targetType: "event",
+      targetId: req.params.id,
+      description: `حذف الحدث: ${event.title}`
+    });
+    
+    res.json({ ok: true, id: req.params.id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+function parseEvent(event) {
+  return {
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    eventDate: event.event_date,
+    location: event.location,
+    isActive: event.is_active === 1,
+    createdAt: event.created_at,
+    updatedAt: event.updated_at
+  };
+}
 
 app.patch("/api/settings", requireAuth, requireAdmin, async (req, res, next) => {
   try {

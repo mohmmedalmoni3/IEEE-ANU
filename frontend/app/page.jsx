@@ -1,3 +1,4 @@
+import EventCountdown from "@/components/EventCountdown";
 import LiveWorkshopCard from "@/components/LiveWorkshopCard";
 import PageShell from "@/components/PageShell";
 import StatCounter from "@/components/StatCounter";
@@ -89,6 +90,8 @@ export default async function HomePage() {
       </section>
 
       <LiveWorkshopCard workshop={site.liveWorkshop} />
+
+      <EventCountdown />
 
       <section className="stats">
         <div className="stats-container">
