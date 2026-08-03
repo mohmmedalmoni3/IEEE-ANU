@@ -62,7 +62,7 @@ export default function TeamShowcase() {
                     className="team-portfolio-link"
                   >
                     <ExternalLink size={14} />
-                    <span>البورتفوليو</span>
+                    <span>تعرف علي</span>
                   </Link>
                 )}
               </div>
@@ -95,7 +95,7 @@ export default function TeamShowcase() {
                     className="team-portfolio-link"
                   >
                     <ExternalLink size={14} />
-                    <span>البورتفوليو</span>
+                    <span>تعرف علي</span>
                   </Link>
                 )}
               </div>
