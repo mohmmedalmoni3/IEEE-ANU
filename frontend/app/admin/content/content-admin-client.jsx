@@ -2,6 +2,7 @@
 
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
+import { Upload } from "lucide-react";
 
 const sections = [
   { key: "stats", label: "الإحصائيات", fields: ["label", "value", "sortOrder"] },
@@ -44,6 +45,8 @@ export default function ContentAdminClient() {
   const [editing, setEditing] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
 
   const section = useMemo(() => sections.find((item) => item.key === active), [active]);
 
@@ -82,6 +85,37 @@ export default function ContentAdminClient() {
   function resetForm() {
     setEditing(null);
     setForms((current) => ({ ...current, [active]: emptyForms[active] }));
+    setImageFile(null);
+  }
+
+  async function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/upload/team-image`, {
+        method: "POST",
+        credentials: "include",
+        body: formData
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "فشل رفع الصورة");
+      }
+
+      const data = await response.json();
+      updateForm("imageUrl", data.imageUrl);
+      setMessage("تم رفع الصورة بنجاح.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function save(event) {
@@ -147,11 +181,32 @@ export default function ContentAdminClient() {
           {section.fields.map((field) => (
             <label key={field}>
               {labels[field]}
-              <input
-                type={field === "value" || field === "sortOrder" ? "number" : "text"}
-                value={forms[active][field] ?? ""}
-                onChange={(event) => updateForm(field, event.target.value)}
-              />
+              {active === "team" && field === "imageUrl" ? (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                  />
+                  {uploading && <span style={{ fontSize: "12px", color: "#20a8ff" }}>جاري الرفع...</span>}
+                  {forms[active].imageUrl && (
+                    <div style={{ marginTop: "8px" }}>
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${forms[active].imageUrl}`}
+                        alt="Preview"
+                        style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "8px" }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <input
+                  type={field === "value" || field === "sortOrder" ? "number" : "text"}
+                  value={forms[active][field] ?? ""}
+                  onChange={(event) => updateForm(field, event.target.value)}
+                />
+              )}
             </label>
           ))}
         </div>

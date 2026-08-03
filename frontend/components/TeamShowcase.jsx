@@ -26,6 +26,8 @@ export default function TeamShowcase() {
 
   if (loading || members.length === 0) return null;
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
   return (
     <section className="team-showcase-section">
       <div className="team-showcase-header">
@@ -40,10 +42,11 @@ export default function TeamShowcase() {
               <div className="team-member-image">
                 {member.imageUrl ? (
                   <Image
-                    src={member.imageUrl}
+                    src={`${apiUrl}${member.imageUrl}`}
                     alt={member.name}
                     fill
                     sizes="(max-width: 768px) 100px, 150px"
+                    unoptimized
                   />
                 ) : (
                   <div className="team-member-placeholder">
@@ -63,10 +66,11 @@ export default function TeamShowcase() {
               <div className="team-member-image">
                 {member.imageUrl ? (
                   <Image
-                    src={member.imageUrl}
+                    src={`${apiUrl}${member.imageUrl}`}
                     alt={member.name}
                     fill
                     sizes="(max-width: 768px) 100px, 150px"
+                    unoptimized
                   />
                 ) : (
                   <div className="team-member-placeholder">
