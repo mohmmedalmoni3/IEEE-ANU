@@ -3507,6 +3507,107 @@ td small {
     font-size: 10px;
     padding: 3px 6px;
   }
+}
+
+/* 404 Page Styles */
+.not-found-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+  padding: 20px;
+}
+
+.not-found-container {
+  max-width: 600px;
+  width: 100%;
+}
+
+.not-found-content {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 60px 40px;
+  border: 1px solid rgba(32, 168, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.not-found-icon {
+  color: #20a8ff;
+  margin-bottom: 24px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.not-found-title {
+  font-size: 120px;
+  font-weight: 800;
+  color: #20a8ff;
+  margin: 0 0 16px 0;
+  line-height: 1;
+}
+
+.not-found-subtitle {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+}
+
+.not-found-description {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+}
+
+.not-found-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #20a8ff 0%, #0d6efd 100%);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.not-found-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(32, 168, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .not-found-content {
+    padding: 40px 24px;
+  }
+
+  .not-found-title {
+    font-size: 80px;
+  }
+
+  .not-found-subtitle {
+    font-size: 24px;
+  }
+
+  .not-found-description {
+    font-size: 14px;
+  }
 
   .help-hero-panel {
     align-items: stretch;

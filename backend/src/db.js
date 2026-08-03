@@ -67,6 +67,7 @@ export async function initDb() {
         discord TEXT,
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'member',
+        show_404 INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
@@ -236,6 +237,14 @@ export async function initDb() {
       console.log("portfolio_url column check:", error.message);
     }
 
+    // Add show_404 column if it doesn't exist (for existing databases)
+    try {
+      await pgPool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS show_404 INTEGER NOT NULL DEFAULT 0");
+    } catch (error) {
+      // Column might already exist, ignore error
+      console.log("show_404 column check:", error.message);
+    }
+
     const { rows } = await pgPool.query(
       `SELECT column_name
        FROM information_schema.columns
@@ -264,6 +273,7 @@ export async function initDb() {
       discord TEXT,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'member',
+      show_404 INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );

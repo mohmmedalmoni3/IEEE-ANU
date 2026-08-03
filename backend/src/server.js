@@ -188,6 +188,7 @@ function publicUser(user) {
     email: user.email,
     discord: user.discord,
     role: user.role,
+    show404: user.show_404 === 1,
     joinDate: user.created_at
   };
 }
@@ -887,6 +888,7 @@ app.get("/api/users", requireAuth, requireAdmin, async (req, res, next) => {
         users.email,
         users.discord,
         users.role,
+        users.show_404 AS "show404",
         users.created_at AS "createdAt",
         users.updated_at AS "updatedAt",
         COUNT(applications.id) AS "applicationsCount"
@@ -943,6 +945,56 @@ app.patch("/api/users/:id/role", requireAuth, requireAdmin, async (req, res, nex
         users.email,
         users.discord,
         users.role,
+        users.show_404 AS "show404",
+        users.created_at AS "createdAt",
+        users.updated_at AS "updatedAt",
+        COUNT(applications.id) AS "applicationsCount"
+      FROM users
+      LEFT JOIN applications ON applications.user_id = users.id
+      WHERE users.id = $id
+      GROUP BY users.id`,
+      { $id: req.params.id }
+    );
+
+    res.json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/users/:id/show-404", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { show404 } = req.body;
+    if (typeof show404 !== "boolean") {
+      return res.status(400).json({ message: "قيمة غير صالحة" });
+    }
+
+    const user = await getOne("SELECT * FROM users WHERE id = $id", { $id: req.params.id });
+    if (!user) return res.status(404).json({ message: "المستخدم غير موجود" });
+
+    await run("UPDATE users SET show_404 = $show404, updated_at = CURRENT_TIMESTAMP WHERE id = $id", {
+      $id: req.params.id,
+      $show404: show404 ? 1 : 0
+    });
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "user.show404.update",
+      targetType: "user",
+      targetId: user.id,
+      description: `${show404 ? "تفعيل" : "تعطيل"} صفحة 404 للمستخدم ${user.firstname} ${user.lastname}`,
+      metadata: { show404 }
+    });
+
+    const updatedUser = await getOne(
+      `SELECT
+        users.id,
+        users.firstname,
+        users.lastname,
+        users.username,
+        users.email,
+        users.discord,
+        users.role,
+        users.show_404 AS "show404",
         users.created_at AS "createdAt",
         users.updated_at AS "updatedAt",
         COUNT(applications.id) AS "applicationsCount"

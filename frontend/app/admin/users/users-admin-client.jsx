@@ -62,6 +62,17 @@ export default function UsersAdminClient() {
     }
   }
 
+  async function toggleShow404(id, currentShow404) {
+    setMessage("");
+    try {
+      const data = await apiPatch(`/users/${id}/show-404`, { show404: !currentShow404 });
+      setUsers((items) => items.map((item) => (item.id === id ? data.user : item)));
+      setMessage(!currentShow404 ? "تم تفعيل صفحة 404 للمستخدم بنجاح." : "تم تعطيل صفحة 404 للمستخدم بنجاح.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
   async function deleteUser(user) {
     const ok = window.confirm(`هل أنت متأكد من حذف حساب ${user.firstname} ${user.lastname}؟`);
     if (!ok) return;
@@ -168,6 +179,13 @@ export default function UsersAdminClient() {
                 onClick={() => updateRole(user.id, "member")}
               >
                 جعله عضو
+              </button>
+              <button
+                className={`status-action ${user.show404 ? "accepted" : "pending"}`}
+                type="button"
+                onClick={() => toggleShow404(user.id, user.show404)}
+              >
+                {user.show404 ? "تعطيل 404" : "تفعيل 404"}
               </button>
               <button
                 className="status-action"
