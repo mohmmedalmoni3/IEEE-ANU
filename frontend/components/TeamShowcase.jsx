@@ -39,11 +39,10 @@ export default function TeamShowcase() {
             <div className="team-member-card" key={member.id}>
               <div className="team-member-image">
                 {member.imageUrl ? (
-                  <Image
-                    src={`/team-images/${member.imageUrl}`}
+                  <img
+                    src={member.imageUrl}
                     alt={member.name}
-                    fill
-                    sizes="(max-width: 768px) 100px, 150px"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
                   <div className="team-member-placeholder">
@@ -62,11 +61,10 @@ export default function TeamShowcase() {
             <div className="team-member-card" key={`${member.id}-duplicate`}>
               <div className="team-member-image">
                 {member.imageUrl ? (
-                  <Image
-                    src={`/team-images/${member.imageUrl}`}
+                  <img
+                    src={member.imageUrl}
                     alt={member.name}
-                    fill
-                    sizes="(max-width: 768px) 100px, 150px"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
                   <div className="team-member-placeholder">

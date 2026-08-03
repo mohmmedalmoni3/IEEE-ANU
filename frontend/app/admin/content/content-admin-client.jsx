@@ -151,17 +151,17 @@ export default function ContentAdminClient() {
                 <div>
                   <input
                     type="text"
-                    placeholder="اسم الصورة (مثال: loai.jpg)"
+                    placeholder="رابط الصورة الكامل (مثال: https://example.com/image.jpg)"
                     value={forms[active].imageUrl ?? ""}
                     onChange={(event) => updateForm(field, event.target.value)}
                   />
                   <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>
-                    ضع الصور في مجلد frontend/public/team-images
+                    أدخل رابط الصورة من أي مصدر خارجي
                   </p>
                   {forms[active].imageUrl && (
                     <div style={{ marginTop: "8px" }}>
                       <img
-                        src={`/team-images/${forms[active].imageUrl}`}
+                        src={forms[active].imageUrl}
                         alt="Preview"
                         style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "8px" }}
                       />

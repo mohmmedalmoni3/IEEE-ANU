@@ -5,7 +5,7 @@ const contentSecurityPolicy = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: https://img.youtube.com https://ui-avatars.com http://localhost:4000 https://ieee-anu.onrender.com",
+  "img-src 'self' data: https: http:",
   "connect-src 'self' http://localhost:4000 https://ieee-anu.onrender.com https:",
   "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://meet.google.com",
   "object-src 'none'",
@@ -19,8 +19,11 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "img.youtube.com" },
-      { protocol: "https", hostname: "ui-avatars.com" }
-    ]
+      { protocol: "https", hostname: "ui-avatars.com" },
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" }
+    ],
+    unoptimized: true
   },
   async headers() {
     return [
