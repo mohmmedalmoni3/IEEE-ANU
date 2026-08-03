@@ -5,7 +5,7 @@ const contentSecurityPolicy = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: https://img.youtube.com https://ui-avatars.com",
+  "img-src 'self' data: https://img.youtube.com https://ui-avatars.com http://localhost:4000 https://ieee-anu.onrender.com",
   "connect-src 'self' http://localhost:4000 https://ieee-anu.onrender.com https:",
   "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://meet.google.com",
   "object-src 'none'",

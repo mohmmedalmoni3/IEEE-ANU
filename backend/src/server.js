@@ -1509,7 +1509,7 @@ app.get("/api/team-members/:id", async (req, res, next) => {
 
 app.post("/api/team-members", requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { name, role, imageUrl, sortOrder } = req.body;
+    const { name, role, imageUrl, portfolioUrl, sortOrder } = req.body;
     
     if (!name || !role) {
       return res.status(400).json({ message: "الاسم والدور مطلوبان" });
@@ -1517,9 +1517,9 @@ app.post("/api/team-members", requireAuth, requireAdmin, async (req, res, next) 
     
     const id = crypto.randomUUID();
     await run(
-      `INSERT INTO team_members (id, name, role, image_url, sort_order, is_active, created_at, updated_at)
-       VALUES ($id, $name, $role, $imageUrl, $sortOrder, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      { $id: id, $name: cleanText(name, 100), $role: cleanText(role, 100), $imageUrl: cleanText(imageUrl, 500) || null, $sortOrder: sortOrder || 0 }
+      `INSERT INTO team_members (id, name, role, image_url, portfolio_url, sort_order, is_active, created_at, updated_at)
+       VALUES ($id, $name, $role, $imageUrl, $portfolioUrl, $sortOrder, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      { $id: id, $name: cleanText(name, 100), $role: cleanText(role, 100), $imageUrl: cleanText(imageUrl, 500) || null, $portfolioUrl: cleanText(portfolioUrl, 500) || null, $sortOrder: sortOrder || 0 }
     );
     
     const member = await getOne("SELECT * FROM team_members WHERE id = $id", { $id: id });
@@ -1540,7 +1540,7 @@ app.post("/api/team-members", requireAuth, requireAdmin, async (req, res, next) 
 
 app.patch("/api/team-members/:id", requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { name, role, imageUrl, sortOrder, isActive } = req.body;
+    const { name, role, imageUrl, portfolioUrl, sortOrder, isActive } = req.body;
     
     const existing = await getOne("SELECT * FROM team_members WHERE id = $id", { $id: req.params.id });
     if (!existing) return res.status(404).json({ message: "العضو غير موجود" });
@@ -1559,6 +1559,10 @@ app.patch("/api/team-members/:id", requireAuth, requireAdmin, async (req, res, n
     if (imageUrl !== undefined) {
       updates.push("image_url = $imageUrl");
       params.$imageUrl = cleanText(imageUrl, 500) || null;
+    }
+    if (portfolioUrl !== undefined) {
+      updates.push("portfolio_url = $portfolioUrl");
+      params.$portfolioUrl = cleanText(portfolioUrl, 500) || null;
     }
     if (sortOrder !== undefined) {
       updates.push("sort_order = $sortOrder");
@@ -1622,6 +1626,7 @@ function parseTeamMember(member) {
     name: member.name,
     role: member.role,
     imageUrl: member.image_url,
+    portfolioUrl: member.portfolio_url,
     sortOrder: member.sort_order,
     isActive: member.is_active === 1,
     createdAt: member.created_at,
