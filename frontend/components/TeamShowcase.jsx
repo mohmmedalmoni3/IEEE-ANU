@@ -27,6 +27,9 @@ export default function TeamShowcase() {
 
   if (loading || members.length === 0) return null;
 
+  // Duplicate members multiple times for seamless scrolling
+  const duplicatedMembers = [...members, ...members, ...members, ...members];
+
   return (
     <section className="team-showcase-section">
       <div className="team-showcase-header">
@@ -36,41 +39,8 @@ export default function TeamShowcase() {
       
       <div className="team-marquee-container">
         <div className="team-marquee">
-          {members.map((member) => (
-            <div className="team-member-card" key={member.id}>
-              <div className="team-member-image">
-                {member.imageUrl ? (
-                  <img
-                    src={member.imageUrl}
-                    alt={member.name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : (
-                  <div className="team-member-placeholder">
-                    {member.name.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <div className="team-member-info">
-                <h3>{member.name}</h3>
-                <p>{member.role}</p>
-                {member.portfolioUrl && (
-                  <Link 
-                    href={member.portfolioUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="team-portfolio-link"
-                  >
-                    <ExternalLink size={14} />
-                    <span>تعرف علي</span>
-                  </Link>
-                )}
-              </div>
-            </div>
-          ))}
-          {/* Duplicate for seamless loop */}
-          {members.map((member) => (
-            <div className="team-member-card" key={`${member.id}-duplicate`}>
+          {duplicatedMembers.map((member, index) => (
+            <div className="team-member-card" key={`${member.id}-${index}`}>
               <div className="team-member-image">
                 {member.imageUrl ? (
                   <img
