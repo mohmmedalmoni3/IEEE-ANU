@@ -228,6 +228,14 @@ export async function initDb() {
       );
     `);
 
+    // Add portfolio_url column if it doesn't exist (for existing databases)
+    try {
+      await pgPool.query("ALTER TABLE team_members ADD COLUMN IF NOT EXISTS portfolio_url TEXT");
+    } catch (error) {
+      // Column might already exist, ignore error
+      console.log("portfolio_url column check:", error.message);
+    }
+
     const { rows } = await pgPool.query(
       `SELECT column_name
        FROM information_schema.columns
