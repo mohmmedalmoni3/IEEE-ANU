@@ -2,6 +2,7 @@ import EventCountdown from "@/components/EventCountdown";
 import LiveWorkshopCard from "@/components/LiveWorkshopCard";
 import PageShell from "@/components/PageShell";
 import StatCounter from "@/components/StatCounter";
+import TeamShowcase from "@/components/TeamShowcase";
 import VideoCard from "@/components/VideoCard";
 import { apiGet } from "@/lib/api";
 import { ArrowLeft, BookOpen, CalendarCheck, Code2, GraduationCap, HelpCircle, Radio, ShieldCheck, Sparkles, Users, Workflow } from "lucide-react";
@@ -163,6 +164,8 @@ export default async function HomePage() {
       </section>
 
       <div className="decorative-bar"><div className="decorative-text">IEEE ANU • IEEE ANU • IEEE ANU • IEEE ANU</div></div>
+
+      <TeamShowcase />
 
       <section className="content-creators">
         <div className="section-header">

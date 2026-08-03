@@ -1448,6 +1448,148 @@ function parseEvent(event) {
   };
 }
 
+// Team Members API endpoints
+app.get("/api/team-members", async (req, res, next) => {
+  try {
+    const members = await getAll("SELECT * FROM team_members WHERE is_active = 1 ORDER BY sort_order ASC");
+    res.json({ members: members.map(parseTeamMember) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/team-members/:id", async (req, res, next) => {
+  try {
+    const member = await getOne("SELECT * FROM team_members WHERE id = $id", { $id: req.params.id });
+    if (!member) return res.status(404).json({ message: "العضو غير موجود" });
+    res.json({ member: parseTeamMember(member) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/team-members", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { name, role, imageUrl, sortOrder } = req.body;
+    
+    if (!name || !role) {
+      return res.status(400).json({ message: "الاسم والدور مطلوبان" });
+    }
+    
+    const id = crypto.randomUUID();
+    await run(
+      `INSERT INTO team_members (id, name, role, image_url, sort_order, is_active, created_at, updated_at)
+       VALUES ($id, $name, $role, $imageUrl, $sortOrder, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      { $id: id, $name: cleanText(name, 100), $role: cleanText(role, 100), $imageUrl: cleanText(imageUrl, 500) || null, $sortOrder: sortOrder || 0 }
+    );
+    
+    const member = await getOne("SELECT * FROM team_members WHERE id = $id", { $id: id });
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "team_member.create",
+      targetType: "team_member",
+      targetId: id,
+      description: `إضافة عضو جديد: ${name}`,
+      metadata: { name, role }
+    });
+    
+    res.status(201).json({ member: parseTeamMember(member) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/team-members/:id", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { name, role, imageUrl, sortOrder, isActive } = req.body;
+    
+    const existing = await getOne("SELECT * FROM team_members WHERE id = $id", { $id: req.params.id });
+    if (!existing) return res.status(404).json({ message: "العضو غير موجود" });
+    
+    const updates = [];
+    const params = { $id: req.params.id };
+    
+    if (name !== undefined) {
+      updates.push("name = $name");
+      params.$name = cleanText(name, 100);
+    }
+    if (role !== undefined) {
+      updates.push("role = $role");
+      params.$role = cleanText(role, 100);
+    }
+    if (imageUrl !== undefined) {
+      updates.push("image_url = $imageUrl");
+      params.$imageUrl = cleanText(imageUrl, 500) || null;
+    }
+    if (sortOrder !== undefined) {
+      updates.push("sort_order = $sortOrder");
+      params.$sortOrder = sortOrder;
+    }
+    if (isActive !== undefined) {
+      updates.push("is_active = $isActive");
+      params.$isActive = isActive ? 1 : 0;
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "لا توجد تحديثات" });
+    }
+    
+    updates.push("updated_at = CURRENT_TIMESTAMP");
+    
+    await run(
+      `UPDATE team_members SET ${updates.join(", ")} WHERE id = $id`,
+      params
+    );
+    
+    const member = await getOne("SELECT * FROM team_members WHERE id = $id", { $id: req.params.id });
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "team_member.update",
+      targetType: "team_member",
+      targetId: req.params.id,
+      description: "تحديث بيانات العضو",
+      metadata: { name, role }
+    });
+    
+    res.json({ member: parseTeamMember(member) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.delete("/api/team-members/:id", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const member = await getOne("SELECT id, name FROM team_members WHERE id = $id", { $id: req.params.id });
+    if (!member) return res.status(404).json({ message: "العضو غير موجود" });
+    
+    await run("DELETE FROM team_members WHERE id = $id", { $id: req.params.id });
+    await logAdminActivity({
+      adminId: req.user.id,
+      action: "team_member.delete",
+      targetType: "team_member",
+      targetId: req.params.id,
+      description: `حذف العضو: ${member.name}`
+    });
+    
+    res.json({ ok: true, id: req.params.id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+function parseTeamMember(member) {
+  return {
+    id: member.id,
+    name: member.name,
+    role: member.role,
+    imageUrl: member.image_url,
+    sortOrder: member.sort_order,
+    isActive: member.is_active === 1,
+    createdAt: member.created_at,
+    updatedAt: member.updated_at
+  };
+}
+
 app.patch("/api/settings", requireAuth, requireAdmin, async (req, res, next) => {
   try {
     const { applicationsOpen, applicationsLimit } = req.body;

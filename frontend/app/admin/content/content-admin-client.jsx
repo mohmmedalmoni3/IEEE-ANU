@@ -7,7 +7,8 @@ const sections = [
   { key: "stats", label: "الإحصائيات", fields: ["label", "value", "sortOrder"] },
   { key: "creators", label: "صناع المحتوى", fields: ["name", "role", "platform", "followers", "url", "sortOrder"] },
   { key: "videos", label: "الفيديوهات", fields: ["title", "speaker", "youtubeId", "views", "sortOrder"] },
-  { key: "products", label: "المتجر", fields: ["name", "price", "status", "sortOrder"] }
+  { key: "products", label: "المتجر", fields: ["name", "price", "status", "sortOrder"] },
+  { key: "team", label: "أعضاء الفريق", fields: ["name", "role", "imageUrl", "sortOrder"] }
 ];
 
 const labels = {
@@ -24,18 +25,20 @@ const labels = {
   youtubeId: "YouTube ID",
   views: "المشاهدات",
   price: "السعر",
-  status: "الحالة"
+  status: "الحالة",
+  imageUrl: "رابط الصورة"
 };
 
 const emptyForms = {
   stats: { label: "", value: 0, sortOrder: 0 },
   creators: { name: "", role: "", platform: "YouTube", followers: "", url: "", sortOrder: 0 },
   videos: { title: "", speaker: "", youtubeId: "", views: "", sortOrder: 0 },
-  products: { name: "", price: "قريبا", status: "تحت التجهيز", sortOrder: 0 }
+  products: { name: "", price: "قريبا", status: "تحت التجهيز", sortOrder: 0 },
+  team: { name: "", role: "", imageUrl: "", sortOrder: 0 }
 };
 
 export default function ContentAdminClient() {
-  const [content, setContent] = useState({ stats: [], creators: [], videos: [], products: [] });
+  const [content, setContent] = useState({ stats: [], creators: [], videos: [], products: [], team: [] });
   const [active, setActive] = useState("stats");
   const [forms, setForms] = useState(emptyForms);
   const [editing, setEditing] = useState(null);
@@ -45,12 +48,16 @@ export default function ContentAdminClient() {
   const section = useMemo(() => sections.find((item) => item.key === active), [active]);
 
   function load() {
-    apiGet("/admin/content")
-      .then((data) => setContent({
-        stats: data.stats || [],
-        creators: data.creators || [],
-        videos: data.videos || [],
-        products: data.products || []
+    Promise.all([
+      apiGet("/admin/content"),
+      apiGet("/team-members")
+    ])
+      .then(([contentData, teamData]) => setContent({
+        stats: contentData.stats || [],
+        creators: contentData.creators || [],
+        videos: contentData.videos || [],
+        products: contentData.products || [],
+        team: teamData.members || []
       }))
       .catch((error) => setMessage(error.message))
       .finally(() => setLoading(false));
@@ -82,12 +89,24 @@ export default function ContentAdminClient() {
     setMessage("");
     const payload = forms[active];
     try {
-      if (editing) {
-        await apiPatch(`/admin/content/${active}/${editing}`, payload);
-        setMessage("تم تحديث المحتوى بنجاح.");
+      if (active === "team") {
+        // Use team members API
+        if (editing) {
+          await apiPatch(`/team-members/${editing}`, payload);
+          setMessage("تم تحديث العضو بنجاح.");
+        } else {
+          await apiPost("/team-members", payload);
+          setMessage("تمت إضافة العضو بنجاح.");
+        }
       } else {
-        await apiPost(`/admin/content/${active}`, payload);
-        setMessage("تمت إضافة المحتوى بنجاح.");
+        // Use content API
+        if (editing) {
+          await apiPatch(`/admin/content/${active}/${editing}`, payload);
+          setMessage("تم تحديث المحتوى بنجاح.");
+        } else {
+          await apiPost(`/admin/content/${active}`, payload);
+          setMessage("تمت إضافة المحتوى بنجاح.");
+        }
       }
       resetForm();
       load();
@@ -98,7 +117,11 @@ export default function ContentAdminClient() {
 
   async function remove(item) {
     if (!window.confirm("هل أنت متأكد من حذف هذا العنصر؟")) return;
-    await apiDelete(`/admin/content/${active}/${item.id}`);
+    if (active === "team") {
+      await apiDelete(`/team-members/${item.id}`);
+    } else {
+      await apiDelete(`/admin/content/${active}/${item.id}`);
+    }
     load();
   }
 
