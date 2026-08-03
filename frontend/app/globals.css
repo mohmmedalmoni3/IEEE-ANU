@@ -1091,13 +1091,16 @@ th {
   overflow: hidden;
   width: 100%;
   position: relative;
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
 
 .team-marquee {
   display: flex;
   gap: 24px;
-  animation: marquee 30s linear infinite;
+  animation: marquee 40s linear infinite;
   padding: 10px 0;
+  width: max-content;
 }
 
 .team-marquee:hover {
@@ -3467,21 +3470,22 @@ td small {
   }
 
   .team-marquee {
-    gap: 16px;
+    gap: 12px;
+    animation-duration: 30s;
   }
 
   .team-member-card {
-    width: 140px;
-    padding: 16px;
+    width: 120px;
+    padding: 12px;
   }
 
   .team-member-image {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
   }
 
   .team-member-placeholder {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .team-member-info h3 {
@@ -3490,6 +3494,11 @@ td small {
 
   .team-member-info p {
     font-size: 12px;
+  }
+
+  .team-portfolio-link {
+    font-size: 10px;
+    padding: 3px 6px;
   }
 
   .help-hero-panel {
