@@ -27,9 +27,6 @@ export default function TeamShowcase() {
 
   if (loading || members.length === 0) return null;
 
-  // Duplicate members multiple times for seamless scrolling
-  const duplicatedMembers = [...members, ...members, ...members, ...members];
-
   return (
     <section className="team-showcase-section">
       <div className="team-showcase-header">
@@ -37,10 +34,10 @@ export default function TeamShowcase() {
         <h2>فريق IEEE ANU</h2>
       </div>
       
-      <div className="team-marquee-container">
-        <div className="team-marquee">
-          {duplicatedMembers.map((member, index) => (
-            <div className="team-member-card" key={`${member.id}-${index}`}>
+      <div className="team-scroll-container">
+        <div className="team-scroll">
+          {members.map((member) => (
+            <div className="team-member-card" key={member.id}>
               <div className="team-member-image">
                 {member.imageUrl ? (
                   <img

@@ -1087,31 +1087,40 @@ th {
   color: #ffffff;
 }
 
-.team-marquee-container {
-  overflow: hidden;
+.team-scroll-container {
+  overflow-x: auto;
+  overflow-y: hidden;
   width: 100%;
   position: relative;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(32, 168, 255, 0.3) transparent;
 }
 
-.team-marquee {
+.team-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.team-scroll-container::-webkit-scrollbar-track {
+  background: rgba(32, 168, 255, 0.1);
+  border-radius: 3px;
+}
+
+.team-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(32, 168, 255, 0.3);
+  border-radius: 3px;
+}
+
+.team-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(32, 168, 255, 0.5);
+}
+
+.team-scroll {
   display: flex;
   gap: 24px;
-  animation: marquee 40s linear infinite;
-  padding: 10px 0;
+  padding: 10px 20px;
   width: max-content;
-}
-
-.team-marquee:hover {
-  animation-play-state: paused;
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
 }
 
 .team-member-card {
@@ -3467,23 +3476,23 @@ td small {
     font-size: 22px;
   }
 
-  .team-marquee {
-    gap: 12px;
-    animation-duration: 30s;
+  .team-scroll {
+    gap: 16px;
+    padding: 10px 16px;
   }
 
   .team-member-card {
-    width: 120px;
-    padding: 12px;
+    width: 140px;
+    padding: 16px;
   }
 
   .team-member-image {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
   }
 
   .team-member-placeholder {
-    font-size: 24px;
+    font-size: 28px;
   }
 
   .team-member-info h3 {
