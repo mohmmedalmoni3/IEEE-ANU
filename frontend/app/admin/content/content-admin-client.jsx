@@ -8,7 +8,7 @@ const sections = [
   { key: "creators", label: "صناع المحتوى", fields: ["name", "role", "platform", "followers", "url", "sortOrder"] },
   { key: "videos", label: "الفيديوهات", fields: ["title", "speaker", "youtubeId", "views", "sortOrder"] },
   { key: "products", label: "المتجر", fields: ["name", "price", "status", "sortOrder"] },
-  { key: "team", label: "أعضاء الفريق", fields: ["name", "role", "imageUrl", "portfolioUrl", "sortOrder"] }
+  { key: "team", label: "أعضاء الفريق", fields: ["name", "role", "imageUrl", "sortOrder"] }
 ];
 
 const labels = {
@@ -26,8 +26,7 @@ const labels = {
   views: "المشاهدات",
   price: "السعر",
   status: "الحالة",
-  imageUrl: "رابط الصورة",
-  portfolioUrl: "رابط البورتفوليو"
+  imageUrl: "رابط الصورة"
 };
 
 const emptyForms = {
@@ -35,7 +34,7 @@ const emptyForms = {
   creators: { name: "", role: "", platform: "YouTube", followers: "", url: "", sortOrder: 0 },
   videos: { title: "", speaker: "", youtubeId: "", views: "", sortOrder: 0 },
   products: { name: "", price: "قريبا", status: "تحت التجهيز", sortOrder: 0 },
-  team: { name: "", role: "", imageUrl: "", portfolioUrl: "", sortOrder: 0 }
+  team: { name: "", role: "", imageUrl: "", sortOrder: 0 }
 };
 
 export default function ContentAdminClient() {

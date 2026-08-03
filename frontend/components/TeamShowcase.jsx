@@ -1,9 +1,8 @@
 "use client";
 
 import { apiGet } from "@/lib/api";
-import { ExternalLink, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function TeamShowcase() {
@@ -55,17 +54,6 @@ export default function TeamShowcase() {
               <div className="team-member-info">
                 <h3>{member.name}</h3>
                 <p>{member.role}</p>
-                {member.portfolioUrl && (
-                  <Link 
-                    href={member.portfolioUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="team-portfolio-link"
-                  >
-                    <ExternalLink size={14} />
-                    <span>البورتفوليو</span>
-                  </Link>
-                )}
               </div>
             </div>
           ))}
@@ -89,17 +77,6 @@ export default function TeamShowcase() {
               <div className="team-member-info">
                 <h3>{member.name}</h3>
                 <p>{member.role}</p>
-                {member.portfolioUrl && (
-                  <Link 
-                    href={member.portfolioUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="team-portfolio-link"
-                  >
-                    <ExternalLink size={14} />
-                    <span>البورتفوليو</span>
-                  </Link>
-                )}
               </div>
             </div>
           ))}
