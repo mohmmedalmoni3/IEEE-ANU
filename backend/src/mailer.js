@@ -65,53 +65,80 @@ function getEmailTemplate(content) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IEEE ANU</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
+    
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px;
+      font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 40px 20px;
       margin: 0;
+      min-height: 100vh;
     }
     .email-container {
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
       background: #ffffff;
-      border-radius: 20px;
+      border-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
     }
     .header {
-      background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
-      padding: 40px 30px;
+      background: linear-gradient(135deg, #0066cc 0%, #004499 50%, #003366 100%);
+      padding: 50px 40px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.8; }
     }
     .header h1 {
       color: #ffffff;
-      font-size: 32px;
-      font-weight: 700;
+      font-size: 36px;
+      font-weight: 800;
       margin: 0;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
     }
     .header p {
-      color: #e0e0e0;
-      font-size: 16px;
-      margin: 10px 0 0 0;
+      color: #e8e8e8;
+      font-size: 18px;
+      margin: 12px 0 0 0;
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
     }
     .logo {
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
       background: #ffffff;
       border-radius: 50%;
-      margin: 0 auto 20px;
+      margin: 0 auto 25px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
       overflow: hidden;
+      position: relative;
+      z-index: 1;
+      border: 4px solid rgba(255, 255, 255, 0.3);
     }
     .logo img {
       width: 100%;
@@ -119,111 +146,161 @@ function getEmailTemplate(content) {
       object-fit: contain;
     }
     .content {
-      padding: 40px 30px;
+      padding: 50px 45px;
       background: #ffffff;
     }
     .content h2 {
-      color: #333333;
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 20px;
+      color: #1a1a2e;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 25px;
       text-align: center;
+      line-height: 1.4;
     }
     .content p {
-      color: #555555;
-      font-size: 16px;
-      line-height: 1.8;
-      margin-bottom: 15px;
+      color: #4a4a4a;
+      font-size: 17px;
+      line-height: 2;
+      margin-bottom: 20px;
+      font-weight: 400;
     }
     .content strong {
       color: #0066cc;
-      font-weight: 600;
+      font-weight: 700;
     }
     .otp-code {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      padding: 20px;
-      border-radius: 15px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 35px 25px;
+      border-radius: 20px;
       text-align: center;
-      margin: 30px 0;
-      border: 2px solid #0066cc;
+      margin: 35px 0;
+      border: 3px solid #0066cc;
+      box-shadow: 0 8px 25px rgba(0, 102, 204, 0.15);
     }
     .otp-code span {
-      font-size: 36px;
-      font-weight: 700;
+      font-size: 42px;
+      font-weight: 800;
       color: #0066cc;
-      letter-spacing: 8px;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+      letter-spacing: 12px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      font-family: 'Cairo', sans-serif;
     }
     .button {
       display: inline-block;
       background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
       color: #ffffff;
-      padding: 15px 40px;
-      border-radius: 30px;
+      padding: 18px 50px;
+      border-radius: 35px;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 16px;
-      margin: 20px 0;
-      box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+      font-weight: 700;
+      font-size: 17px;
+      margin: 25px 0;
+      box-shadow: 0 6px 20px rgba(0, 102, 204, 0.35);
       transition: all 0.3s ease;
+      font-family: 'Cairo', sans-serif;
     }
     .button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 102, 204, 0.45);
     }
     .info-box {
-      background: #f8f9fa;
-      border-right: 4px solid #0066cc;
-      padding: 20px;
-      margin: 20px 0;
-      border-radius: 8px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-right: 5px solid #0066cc;
+      padding: 25px;
+      margin: 25px 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
     .info-box p {
       margin: 0;
-      color: #555555;
+      color: #4a4a4a;
+      font-size: 16px;
+    }
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+      margin: 35px 0;
     }
     .footer {
-      background: #f8f9fa;
-      padding: 30px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 40px;
       text-align: center;
-      border-top: 1px solid #e0e0e0;
+      border-top: 1px solid #dee2e6;
     }
     .footer p {
-      color: #777777;
-      font-size: 14px;
-      margin-bottom: 10px;
+      color: #6c757d;
+      font-size: 15px;
+      margin-bottom: 12px;
+      font-weight: 400;
     }
     .footer a {
       color: #0066cc;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 700;
+      transition: color 0.3s ease;
+    }
+    .footer a:hover {
+      color: #004499;
     }
     .social-links {
-      margin-top: 20px;
+      margin-top: 25px;
     }
     .social-links a {
       display: inline-block;
-      margin: 0 10px;
+      margin: 0 12px;
       color: #0066cc;
       text-decoration: none;
-      font-size: 20px;
+      font-size: 24px;
+      transition: transform 0.3s ease;
+    }
+    .social-links a:hover {
+      transform: scale(1.2);
+    }
+    .highlight {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+      padding: 20px;
+      border-radius: 12px;
+      margin: 25px 0;
+      border: 2px solid #ffc107;
+    }
+    .highlight p {
+      margin: 0;
+      color: #856404;
+      font-size: 15px;
+      font-weight: 600;
     }
     @media only screen and (max-width: 600px) {
       body {
-        padding: 10px;
+        padding: 20px 10px;
       }
       .header {
-        padding: 30px 20px;
+        padding: 35px 25px;
       }
       .header h1 {
-        font-size: 24px;
+        font-size: 28px;
+      }
+      .header p {
+        font-size: 16px;
       }
       .content {
-        padding: 30px 20px;
+        padding: 35px 25px;
+      }
+      .content h2 {
+        font-size: 24px;
+      }
+      .content p {
+        font-size: 16px;
+      }
+      .otp-code {
+        padding: 25px 20px;
       }
       .otp-code span {
-        font-size: 28px;
-        letter-spacing: 4px;
+        font-size: 32px;
+        letter-spacing: 6px;
+      }
+      .button {
+        padding: 15px 35px;
+        font-size: 16px;
       }
     }
   </style>

@@ -1708,20 +1708,20 @@ app.post("/api/forgot-password", async (req, res, next) => {
       return res.status(400).json({ message: "الرجاء إدخال البريد الإلكتروني" });
     }
 
-    // Rate limiting: max 5 requests per hour per email
+    // Rate limiting: max 3 requests per day per email
     const now = Date.now();
     const rateLimitKey = email.toLowerCase();
     const rateLimitData = passwordResetRateLimit.get(rateLimitKey);
     
     if (rateLimitData) {
-      const oneHour = 60 * 60 * 1000;
-      if (now - rateLimitData.firstRequest < oneHour) {
-        if (rateLimitData.count >= 5) {
-          return res.status(429).json({ message: "تم تجاوز الحد المسموح. يرجى المحاولة بعد ساعة." });
+      const oneDay = 24 * 60 * 60 * 1000;
+      if (now - rateLimitData.firstRequest < oneDay) {
+        if (rateLimitData.count >= 3) {
+          return res.status(429).json({ message: "تم تجاوز الحد المسموح (3 طلبات في اليوم). يرجى المحاولة غداً." });
         }
         rateLimitData.count++;
       } else {
-        // Reset after hour
+        // Reset after day
         rateLimitData.count = 1;
         rateLimitData.firstRequest = now;
       }
@@ -1735,7 +1735,7 @@ app.post("/api/forgot-password", async (req, res, next) => {
     if (user) {
       // Generate OTP code
       const otpCode = generateOTP();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
       
       // Delete old unused OTP codes for this user
       await run("DELETE FROM otp_codes WHERE user_id = $userId AND used = 0", { $userId: user.id });
@@ -1761,7 +1761,7 @@ app.post("/api/forgot-password", async (req, res, next) => {
           <div class="otp-code">
             <span>${otpCode}</span>
           </div>
-          <p>هذا الرمز صالح لمدة 10 دقائق فقط.</p>
+          <p>هذا الرمز صالح لمدة 5 دقائق فقط.</p>
           <div class="info-box">
             <p>لأسباب أمنية، لا تشارك هذا الرمز مع أي شخص.</p>
           </div>
@@ -1777,7 +1777,7 @@ app.post("/api/forgot-password", async (req, res, next) => {
             "",
             `رمز التحقق الخاص بك هو: ${otpCode}`,
             "",
-            "هذا الرمز صالح لمدة 10 دقائق فقط.",
+            "هذا الرمز صالح لمدة 5 دقائق فقط.",
             "",
             "لأسباب أمنية، لا تشارك هذا الرمز مع أي شخص.",
             "",
