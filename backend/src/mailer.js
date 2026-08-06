@@ -110,10 +110,13 @@ function getEmailTemplate(content) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
-      font-weight: bold;
-      color: #0066cc;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
     .content {
       padding: 40px 30px;
@@ -228,9 +231,11 @@ function getEmailTemplate(content) {
 <body>
   <div class="email-container">
     <div class="header">
-      <div class="logo">IEEE</div>
+      <div class="logo">
+        <img src="${process.env.APP_BASE_URL || 'https://ieeeanu.app'}/logo.png" alt="IEEE ANU Logo" />
+      </div>
       <h1>IEEE ANU</h1>
-      <p>فرع الجامعة الأردنية</p>
+      <p>فرع جامعة عجلون الوطنية</p>
     </div>
     <div class="content">
       ${content}
