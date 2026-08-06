@@ -1754,6 +1754,19 @@ app.post("/api/forgot-password", async (req, res, next) => {
       
       // Send email with OTP
       try {
+        const emailContent = `
+          <h2>رمز إعادة تعيين كلمة المرور</h2>
+          <p>مرحبا <strong>${user.firstname}</strong>،</p>
+          <p>لقد طلبت إعادة تعيين كلمة المرور لحسابك في IEEE ANU.</p>
+          <div class="otp-code">
+            <span>${otpCode}</span>
+          </div>
+          <p>هذا الرمز صالح لمدة 10 دقائق فقط.</p>
+          <div class="info-box">
+            <p>لأسباب أمنية، لا تشارك هذا الرمز مع أي شخص.</p>
+          </div>
+        `;
+        
         await sendMail({
           to: user.email,
           subject: "رمز إعادة تعيين كلمة المرور - IEEE ANU",
@@ -1766,16 +1779,11 @@ app.post("/api/forgot-password", async (req, res, next) => {
             "",
             "هذا الرمز صالح لمدة 10 دقائق فقط.",
             "",
+            "لأسباب أمنية، لا تشارك هذا الرمز مع أي شخص.",
+            "",
             "إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذه الرسالة."
           ].join("\n"),
-          html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
-            <h2>رمز إعادة تعيين كلمة المرور</h2>
-            <p>مرحبا ${user.firstname}،</p>
-            <p>لقد طلبت إعادة تعيين كلمة المرور لحسابك في IEEE ANU.</p>
-            <p style="font-size: 24px; font-weight: bold; color: #0066cc; margin: 20px 0;">${otpCode}</p>
-            <p>هذا الرمز صالح لمدة 10 دقائق فقط.</p>
-            <p>إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذه الرسالة.</p>
-          </div>`
+          html: emailContent
         });
       } catch (emailError) {
         console.error("[OTP Email Error]", emailError.message);
