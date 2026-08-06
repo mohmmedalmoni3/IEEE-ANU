@@ -19,7 +19,10 @@ export default function ForgotPasswordPage() {
 
     try {
       await apiPost("/forgot-password", { email });
-      setMessage("إذا كان البريد الإلكتروني مسجلاً، ستصلك رسالة تحتوي على رابط إعادة التعيين.");
+      setMessage("إذا كان البريد الإلكتروني مسجلاً، ستصلك رسالة تحتوي على رمز التحقق.");
+      setTimeout(() => {
+        router.push("/verify-otp");
+      }, 2000);
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -31,7 +34,7 @@ export default function ForgotPasswordPage() {
     <PageShell>
       <section className="page-hero">
         <h1>نسيت كلمة المرور</h1>
-        <p>أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.</p>
+        <p>أدخل بريدك الإلكتروني وسنرسل لك رمز التحقق لإعادة تعيين كلمة المرور.</p>
       </section>
       <section className="login-content">
         <div className="login-container">
@@ -54,7 +57,7 @@ export default function ForgotPasswordPage() {
                 />
               </label>
               <button className="submit-btn" type="submit" disabled={loading}>
-                {loading ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}
+                {loading ? "جاري الإرسال..." : "إرسال رمز التحقق"}
               </button>
             </form>
             <div className="back-to-login">

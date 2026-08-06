@@ -69,6 +69,11 @@ function cleanCookieSameSite(value) {
   return "Lax";
 }
 
+function generateOTP() {
+  // Generate a 6-digit OTP code
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 function rateLimit({ windowMs, max, keyPrefix }) {
   const hits = new Map();
   return (req, res, next) => {
@@ -1725,66 +1730,97 @@ app.post("/api/forgot-password", async (req, res, next) => {
     }
 
     // Check if user exists (but don't reveal if they don't)
-    const user = await getOne("SELECT id, email FROM users WHERE email = $email", { $email: email.toLowerCase() });
+    const user = await getOne("SELECT id, email, firstname FROM users WHERE email = $email", { $email: email.toLowerCase() });
     
     if (user) {
-      // Generate secure token
-      const token = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      // Generate OTP code
+      const otpCode = generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
       
-      // Delete old unused tokens for this user
-      await run("DELETE FROM password_reset_tokens WHERE user_id = $userId AND used = 0", { $userId: user.id });
+      // Delete old unused OTP codes for this user
+      await run("DELETE FROM otp_codes WHERE user_id = $userId AND used = 0", { $userId: user.id });
       
-      // Store new token
+      // Store new OTP code
       await run(
-        `INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at, used, created_at)
-         VALUES ($id, $userId, $tokenHash, $expiresAt, 0, CURRENT_TIMESTAMP)`,
+        `INSERT INTO otp_codes (id, user_id, code, expires_at, used, created_at)
+         VALUES ($id, $userId, $code, $expiresAt, 0, CURRENT_TIMESTAMP)`,
         {
           $id: crypto.randomUUID(),
           $userId: user.id,
-          $tokenHash: tokenHash,
+          $code: otpCode,
           $expiresAt: expiresAt.toISOString()
         }
       );
       
-      // Send email
-      const resetUrl = `${process.env.APP_BASE_URL || 'https://ieeeanu.app'}/reset-password?token=${token}`;
-      
+      // Send email with OTP
       try {
         await sendMail({
           to: user.email,
-          subject: "إعادة تعيين كلمة المرور - IEEE ANU",
+          subject: "رمز إعادة تعيين كلمة المرور - IEEE ANU",
           text: [
             "مرحبا،",
             "",
-            "لقد طلبت إعادة تعيين كلمة المرور لحسابك في IEEE ANU.",
+            `لقد طلبت إعادة تعيين كلمة المرور لحسابك في IEEE ANU.`,
             "",
-            `اضغط على الرابط التالي لإعادة تعيين كلمة المرور:`,
-            resetUrl,
+            `رمز التحقق الخاص بك هو: ${otpCode}`,
             "",
-            "هذا الرابط صالح لمدة 30 دقيقة فقط.",
+            "هذا الرمز صالح لمدة 10 دقائق فقط.",
             "",
             "إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذه الرسالة."
           ].join("\n"),
           html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
-            <h2>إعادة تعيين كلمة المرور</h2>
-            <p>مرحبا،</p>
+            <h2>رمز إعادة تعيين كلمة المرور</h2>
+            <p>مرحبا ${user.firstname}،</p>
             <p>لقد طلبت إعادة تعيين كلمة المرور لحسابك في IEEE ANU.</p>
-            <p>اضغط على الرابط التالي لإعادة تعيين كلمة المرور:</p>
-            <p><a href="${resetUrl}" style="color:#0066cc">${resetUrl}</a></p>
-            <p>هذا الرابط صالح لمدة 30 دقيقة فقط.</p>
+            <p style="font-size: 24px; font-weight: bold; color: #0066cc; margin: 20px 0;">${otpCode}</p>
+            <p>هذا الرمز صالح لمدة 10 دقائق فقط.</p>
             <p>إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذه الرسالة.</p>
           </div>`
         });
       } catch (emailError) {
-        console.error("[Password Reset Email Error]", emailError.message);
+        console.error("[OTP Email Error]", emailError.message);
         // Don't reveal email error to user
       }
     }
     
     // Always return same message for security
-    res.json({ message: "إذا كان البريد الإلكتروني مسجلاً، ستصلك رسالة تحتوي على رابط إعادة التعيين." });
+    res.json({ message: "إذا كان البريد الإلكتروني مسجلاً، ستصلك رسالة تحتوي على رمز التحقق." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/verify-otp", async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    
+    if (!email || !otp) {
+      return res.status(400).json({ message: "الرجاء إدخال البريد الإلكتروني ورمز التحقق" });
+    }
+
+    // Find user and valid OTP
+    const user = await getOne("SELECT id, email FROM users WHERE email = $email", { $email: email.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({ message: "المستخدم غير موجود" });
+    }
+
+    const otpRecord = await getOne(
+      `SELECT * FROM otp_codes 
+       WHERE user_id = $userId AND code = $code AND used = 0 AND expires_at > CURRENT_TIMESTAMP
+       ORDER BY created_at DESC LIMIT 1`,
+      { $userId: user.id, $code: otp }
+    );
+
+    if (!otpRecord) {
+      return res.status(400).json({ message: "رمز التحقق غير صالح أو منتهي الصلاحية" });
+    }
+
+    // Mark OTP as used
+    await run("UPDATE otp_codes SET used = 1 WHERE id = $id", { $id: otpRecord.id });
+
+    // Return user ID for password reset
+    res.json({ userId: user.id, message: "رمز التحقق صحيح" });
   } catch (error) {
     next(error);
   }
@@ -1792,10 +1828,10 @@ app.post("/api/forgot-password", async (req, res, next) => {
 
 app.post("/api/reset-password", async (req, res, next) => {
   try {
-    const { token, password, confirmPassword } = req.body;
+    const { userId, password, confirmPassword } = req.body;
     
-    if (!token) {
-      return res.status(400).json({ message: "الرجاء توفير رمز إعادة التعيين" });
+    if (!userId) {
+      return res.status(400).json({ message: "الرجاء توفير معرف المستخدم" });
     }
     
     if (!password || password.length < 8) {
@@ -1806,22 +1842,8 @@ app.post("/api/reset-password", async (req, res, next) => {
       return res.status(400).json({ message: "كلمة المرور وتأكيدها غير متطابقين" });
     }
     
-    // Hash the token to compare with stored hash
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    
-    // Find valid token
-    const resetToken = await getOne(
-      `SELECT * FROM password_reset_tokens 
-       WHERE token_hash = $tokenHash AND used = 0 AND expires_at > CURRENT_TIMESTAMP`,
-      { $tokenHash: tokenHash }
-    );
-    
-    if (!resetToken) {
-      return res.status(400).json({ message: "رمز إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد." });
-    }
-    
     // Get user
-    const user = await getOne("SELECT id FROM users WHERE id = $userId", { $userId: resetToken.user_id });
+    const user = await getOne("SELECT id FROM users WHERE id = $userId", { $userId: userId });
     
     if (!user) {
       return res.status(400).json({ message: "المستخدم غير موجود" });
@@ -1836,13 +1858,9 @@ app.post("/api/reset-password", async (req, res, next) => {
       $userId: user.id
     });
     
-    // Mark token as used
-    await run("UPDATE password_reset_tokens SET used = 1 WHERE id = $tokenId", { $tokenId: resetToken.id });
-    
-    // Delete all other unused tokens for this user for security
-    await run("DELETE FROM password_reset_tokens WHERE user_id = $userId AND used = 0 AND id != $tokenId", {
-      $userId: user.id,
-      $tokenId: resetToken.id
+    // Delete all unused OTP codes for this user for security
+    await run("DELETE FROM otp_codes WHERE user_id = $userId AND used = 0", {
+      $userId: user.id
     });
     
     res.json({ message: "تم إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة." });

@@ -1,28 +1,37 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import PageShell from "@/components/PageShell";
+import Link from "next/link";
 
 function ResetPasswordContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
-  
+  const [userId, setUserId] = useState(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Get userId from sessionStorage
+    const storedUserId = sessionStorage.getItem("resetUserId");
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      setMessage("رمز التحقق منتهي الصلاحية. يرجى طلب رمز جديد.");
+    }
+  }, []);
+
   async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
 
-    if (!token) {
-      setMessage("رمز إعادة التعيين مفقود. يرجى طلب رابط جديد من صفحة نسيت كلمة المرور.");
+    if (!userId) {
+      setMessage("رمز التحقق منتهي الصلاحية. يرجى طلب رمز جديد.");
       return;
     }
 
@@ -39,7 +48,9 @@ function ResetPasswordContent() {
     setLoading(true);
 
     try {
-      await apiPost("/reset-password", { token, password, confirmPassword });
+      await apiPost("/reset-password", { userId, password, confirmPassword });
+      sessionStorage.removeItem("resetUserId");
+      sessionStorage.removeItem("resetEmail");
       setMessage("تم إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.");
       setTimeout(() => {
         router.push("/login");
@@ -104,7 +115,7 @@ function ResetPasswordContent() {
               </button>
             </form>
             <div className="back-to-login">
-              <a href="/forgot-password">طلب رابط جديد</a>
+              <Link href="/forgot-password">طلب رمز جديد</Link>
             </div>
           </div>
         </div>
