@@ -572,7 +572,7 @@ app.post("/api/workshops/:id/register", workshopRegistrationLimiter, async (req,
         `INSERT INTO workshop_registrations (id, workshop_id, full_name, email, phone, answers_json)
          VALUES ($id, $workshopId, $fullName, $email, $phone, $answers)`,
         {
-          $id: crypto.randomUUID(), $workshopId: workshop.id, $fullName, $email,
+          $id: crypto.randomUUID(), $workshopId: workshop.id, $fullName: fullName, $email: email,
           $phone: phone || null, $answers: JSON.stringify(answers)
         }
       );
