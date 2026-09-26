@@ -220,6 +220,7 @@ export async function initDb() {
       CREATE TABLE IF NOT EXISTS workshop_registrations (
         id TEXT PRIMARY KEY,
         workshop_id TEXT NOT NULL REFERENCES workshops(id) ON DELETE CASCADE,
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
         full_name TEXT NOT NULL,
         email TEXT NOT NULL,
         phone TEXT,
@@ -227,6 +228,10 @@ export async function initDb() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE (workshop_id, email)
       );
+
+      ALTER TABLE workshop_registrations ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE SET NULL;
+      CREATE UNIQUE INDEX IF NOT EXISTS workshop_registration_once_per_user
+        ON workshop_registrations(workshop_id, user_id) WHERE user_id IS NOT NULL;
 
       CREATE TABLE IF NOT EXISTS settings (
         id TEXT PRIMARY KEY,
@@ -470,13 +475,15 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS workshop_registrations (
       id TEXT PRIMARY KEY,
       workshop_id TEXT NOT NULL,
+      user_id TEXT,
       full_name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT,
       answers_json TEXT NOT NULL DEFAULT '{}',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (workshop_id, email),
-      FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE
+      FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS settings (
@@ -531,6 +538,15 @@ export async function initDb() {
   if (!hasAdminNote) {
     sqliteDb.exec("ALTER TABLE applications ADD COLUMN admin_note TEXT");
   }
+
+  const registrationColumns = sqliteDb.prepare("PRAGMA table_info(workshop_registrations)").all();
+  if (!registrationColumns.some((column) => column.name === "user_id")) {
+    sqliteDb.exec("ALTER TABLE workshop_registrations ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL");
+  }
+  sqliteDb.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS workshop_registration_once_per_user
+    ON workshop_registrations(workshop_id, user_id) WHERE user_id IS NOT NULL
+  `);
 }
 
 export async function getOne(sql, params = {}) {

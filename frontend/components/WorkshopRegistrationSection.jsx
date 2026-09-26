@@ -1,8 +1,9 @@
 "use client";
 
-import { apiPost } from "@/lib/api";
-import { CalendarDays, MapPin, Users } from "lucide-react";
-import { useState } from "react";
+import { apiGet, apiPost } from "@/lib/api";
+import { CalendarDays, CheckCircle2, LoaderCircle, MapPin, Users } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 function displayDate(value) {
   return value ? new Date(value).toLocaleString("ar-JO") : "غير محدد";
@@ -17,8 +18,36 @@ function getRegistrationMessage(workshop) {
 }
 
 export default function WorkshopRegistrationSection({ workshops = [] }) {
+  const [workshopList, setWorkshopList] = useState(workshops);
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [values, setValues] = useState({});
   const [states, setStates] = useState({});
+  const [registeredIds, setRegisteredIds] = useState(() => new Set(workshops.filter((workshop) => workshop.isRegistered).map((workshop) => workshop.id)));
+
+  useEffect(() => {
+    let active = true;
+    apiGet("/workshops")
+      .then((data) => {
+        if (!active) return;
+        const publicWorkshops = data.workshops || workshops;
+        setWorkshopList(publicWorkshops);
+        setIsAuthenticated(Boolean(data.authenticated));
+        setRegisteredIds(new Set(publicWorkshops.filter((workshop) => workshop.isRegistered).map((workshop) => workshop.id)));
+        if (data.user) {
+          setValues((current) => {
+            const next = { ...current };
+            for (const workshop of publicWorkshops) {
+              next[workshop.id] = { ...current[workshop.id], fullName: data.user.fullName, email: data.user.email };
+            }
+            return next;
+          });
+        }
+      })
+      .catch(() => {
+        if (active) setIsAuthenticated(false);
+      });
+    return () => { active = false; };
+  }, [workshops]);
 
   async function submit(event, workshop) {
     event.preventDefault();
@@ -32,8 +61,14 @@ export default function WorkshopRegistrationSection({ workshops = [] }) {
         answers: formValues.answers || {}
       });
       setStates((current) => ({ ...current, [workshop.id]: { loading: false, success: true, message: result.message } }));
+      setRegisteredIds((current) => new Set([...current, workshop.id]));
       setValues((current) => ({ ...current, [workshop.id]: {} }));
     } catch (error) {
+      if (error.message?.includes("أنت مسجل بالفعل")) {
+        setRegisteredIds((current) => new Set([...current, workshop.id]));
+        setStates((current) => ({ ...current, [workshop.id]: { loading: false, success: true, message: "أنت مسجل في هذه الورشة" } }));
+        return;
+      }
       setStates((current) => ({ ...current, [workshop.id]: { loading: false, message: error.message } }));
     }
   }
@@ -49,7 +84,7 @@ export default function WorkshopRegistrationSection({ workshops = [] }) {
     }));
   }
 
-  if (!workshops.length) return null;
+  if (!workshopList.length) return null;
 
   return (
     <section className="public-workshops-section" id="workshops">
@@ -58,14 +93,15 @@ export default function WorkshopRegistrationSection({ workshops = [] }) {
         <p>سجّل في الورشة المناسبة، وستصلك تفاصيلها وفق المعلومات الموضحة.</p>
       </div>
       <div className="public-workshops-grid">
-        {workshops.map((workshop) => {
+        {workshopList.map((workshop) => {
           const current = values[workshop.id] || {};
           const state = states[workshop.id] || {};
+          const isRegistered = registeredIds.has(workshop.id) || Boolean(workshop.isRegistered);
           const registrationAvailable = Boolean(workshop.isRegistrationAvailable);
           return (
             <article className="public-workshop-card" key={workshop.id}>
               <div className="public-workshop-heading">
-                <span className={registrationAvailable ? "workshop-status open" : "workshop-status closed"}>{registrationAvailable ? "التسجيل مفتوح" : "التسجيل مغلق"}</span>
+                <span className={isRegistered || registrationAvailable ? "workshop-status open" : "workshop-status closed"}>{isRegistered ? "أنت مسجل" : registrationAvailable ? "التسجيل مفتوح" : "التسجيل مغلق"}</span>
                 <span className="public-workshop-capacity"><Users size={15} /> {workshop.registeredCount}{workshop.maxRegistrations ? ` / ${workshop.maxRegistrations}` : " مسجل"}</span>
               </div>
               <h3>{workshop.title}</h3>
@@ -76,10 +112,11 @@ export default function WorkshopRegistrationSection({ workshops = [] }) {
                 {workshop.location && <span><MapPin size={16} /> {workshop.location}</span>}
               </div>
 
-              {registrationAvailable ? <form className="public-workshop-form" onSubmit={(event) => submit(event, workshop)}>
+              {isRegistered ? <div className="workshop-already-registered" role="status"><CheckCircle2 size={21} /><div><strong>أنت مسجل في هذه الورشة</strong><span>تم حفظ تسجيلك على حسابك. لا تحتاج إلى التسجيل مرة أخرى.</span></div></div> :
+                registrationAvailable && isAuthenticated === true ? <form className="public-workshop-form" onSubmit={(event) => submit(event, workshop)}>
                 <div className="public-workshop-form-grid">
-                  <label>الاسم الكامل<input value={current.fullName || ""} onChange={(event) => update(workshop.id, "fullName", event.target.value)} required autoComplete="name" /></label>
-                  <label>البريد الإلكتروني<input type="email" value={current.email || ""} onChange={(event) => update(workshop.id, "email", event.target.value)} required autoComplete="email" /></label>
+                  <label>الاسم الكامل<input value={current.fullName || ""} readOnly autoComplete="name" /></label>
+                  <label>البريد الإلكتروني<input type="email" value={current.email || ""} readOnly autoComplete="email" /></label>
                   <label>رقم الهاتف<input type="tel" value={current.phone || ""} onChange={(event) => update(workshop.id, "phone", event.target.value)} autoComplete="tel" /></label>
                   {(workshop.fields || []).map((field) => <label key={field.id}>
                     {field.label}{field.required && <span aria-hidden="true"> *</span>}
@@ -90,7 +127,9 @@ export default function WorkshopRegistrationSection({ workshops = [] }) {
                 </div>
                 <button type="submit" className="submit-btn" disabled={state.loading || state.success}>{state.loading ? "جاري التسجيل..." : state.success ? "تم التسجيل" : "تسجيل في الورشة"}</button>
                 {state.message && <p className={state.success ? "workshop-form-message success" : "workshop-form-message"} role="status">{state.message}</p>}
-              </form> : <p className="public-workshop-closed-note">{getRegistrationMessage(workshop)}</p>}
+              </form> : registrationAvailable && isAuthenticated === false ? <div className="workshop-login-to-register"><p>سجّل الدخول بحسابك لإتمام التسجيل في الورشة.</p><Link href="/login" className="submit-btn">تسجيل الدخول</Link></div> :
+                registrationAvailable ? <p className="public-workshop-closed-note"><LoaderCircle size={16} className="workshop-check-spinner" /> جارٍ التحقق من حالة التسجيل...</p> :
+                  <p className="public-workshop-closed-note">{getRegistrationMessage(workshop)}</p>}
             </article>
           );
         })}

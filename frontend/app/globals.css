@@ -2948,6 +2948,67 @@ td small {
   color: #69f0a8;
 }
 
+.workshop-already-registered,
+.workshop-login-to-register {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 15px 16px;
+  border: 1px solid rgba(73, 221, 151, 0.28);
+  border-radius: 11px;
+  background: linear-gradient(110deg, rgba(38, 174, 112, 0.14), rgba(24, 99, 76, 0.1));
+  color: #79efb5;
+}
+
+.workshop-already-registered > svg {
+  flex: 0 0 auto;
+}
+
+.workshop-already-registered div {
+  display: grid;
+  gap: 4px;
+}
+
+.workshop-already-registered strong {
+  color: #a0ffd0;
+  font-size: 0.95rem;
+}
+
+.workshop-already-registered span,
+.workshop-login-to-register p {
+  color: rgba(222, 255, 239, 0.72);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.workshop-login-to-register {
+  justify-content: space-between;
+  border-color: rgba(32, 168, 255, 0.24);
+  background: rgba(32, 168, 255, 0.08);
+}
+
+.workshop-login-to-register p {
+  margin: 0;
+  color: rgba(220, 239, 252, 0.8);
+}
+
+.workshop-login-to-register .submit-btn {
+  flex: 0 0 auto;
+  padding: 9px 15px;
+  text-decoration: none;
+}
+
+.workshop-check-spinner {
+  display: inline-block;
+  vertical-align: middle;
+  animation: workshop-check-spin 900ms linear infinite;
+}
+
+@keyframes workshop-check-spin {
+  to { transform: rotate(360deg); }
+}
+
 .workshop-admin-page > .admin-toolbar,
 .workshop-admin-page > .notice {
   max-width: 1180px;
@@ -3549,6 +3610,11 @@ td small {
   .public-workshops-section {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .workshop-login-to-register {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .workshop-schedule-header {
