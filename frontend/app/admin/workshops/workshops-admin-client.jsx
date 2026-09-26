@@ -2,6 +2,7 @@
 
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { CalendarDays, Clock3, Plus, Trash2, Users } from "lucide-react";
+import WorkshopDateTimePicker from "@/components/WorkshopDateTimePicker";
 import { useEffect, useState } from "react";
 
 const emptyForm = {
@@ -90,6 +91,14 @@ export default function WorkshopsAdminClient() {
 
   async function save(event) {
     event.preventDefault();
+    if (!form.startsAt || !form.endsAt) {
+      setMessage("حدد موعد بداية الورشة ونهايتها.");
+      return;
+    }
+    if (form.endsAt <= form.startsAt) {
+      setMessage("موعد نهاية الورشة يجب أن يكون بعد موعد بدايتها.");
+      return;
+    }
     setSaving(true);
     setMessage("");
     try {
@@ -188,15 +197,15 @@ export default function WorkshopsAdminClient() {
             <span className="workshop-timezone-note"><Clock3 size={15} /> توقيت جهازك</span>
           </div>
           <div className="workshop-schedule-range">
-            <label className="workshop-schedule-point">
+            <div className="workshop-schedule-point">
               <span className="workshop-schedule-point-title"><span className="workshop-schedule-icon start"><CalendarDays size={19} /></span><span><strong>تبدأ الورشة</strong><small>اليوم والساعة</small></span></span>
-              <input type="datetime-local" value={form.startsAt} onChange={(e) => update("startsAt", e.target.value)} required />
-            </label>
+              <WorkshopDateTimePicker value={form.startsAt} onChange={(value) => update("startsAt", value)} label="موعد بداية الورشة" placeholder="اختر موعد البداية" />
+            </div>
             <span className="workshop-schedule-connector" aria-hidden="true">إلى</span>
-            <label className="workshop-schedule-point">
+            <div className="workshop-schedule-point">
               <span className="workshop-schedule-point-title"><span className="workshop-schedule-icon end"><Clock3 size={19} /></span><span><strong>تنتهي الورشة</strong><small>اليوم والساعة</small></span></span>
-              <input type="datetime-local" value={form.endsAt} onChange={(e) => update("endsAt", e.target.value)} required />
-            </label>
+              <WorkshopDateTimePicker value={form.endsAt} onChange={(value) => update("endsAt", value)} label="موعد نهاية الورشة" placeholder="اختر موعد النهاية" minValue={form.startsAt} />
+            </div>
           </div>
         </div>
 
@@ -206,8 +215,8 @@ export default function WorkshopsAdminClient() {
             <p>اختياري؛ اترك الموعدين فارغين ليبقى التسجيل متاحًا حسب زر الفتح والإغلاق والسعة.</p>
           </div>
           <div className="workshop-registration-window-grid">
-            <label>يفتح التسجيل في<input type="datetime-local" value={form.registrationOpensAt} onChange={(e) => update("registrationOpensAt", e.target.value)} /></label>
-            <label>يغلق التسجيل في<input type="datetime-local" value={form.registrationClosesAt} onChange={(e) => update("registrationClosesAt", e.target.value)} /></label>
+            <div className="workshop-date-time-field"><span>يفتح التسجيل في</span><WorkshopDateTimePicker value={form.registrationOpensAt} onChange={(value) => update("registrationOpensAt", value)} label="موعد فتح التسجيل" placeholder="بدون موعد محدد" allowClear /></div>
+            <div className="workshop-date-time-field"><span>يغلق التسجيل في</span><WorkshopDateTimePicker value={form.registrationClosesAt} onChange={(value) => update("registrationClosesAt", value)} label="موعد إغلاق التسجيل" placeholder="بدون موعد محدد" allowClear minValue={form.registrationOpensAt} /></div>
             <label className="workshop-capacity-field">الحد الأقصى للمسجلين<input type="number" min="1" value={form.maxRegistrations} onChange={(e) => update("maxRegistrations", e.target.value)} placeholder="بلا حد" /></label>
           </div>
         </div>
