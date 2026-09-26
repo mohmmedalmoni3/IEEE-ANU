@@ -403,14 +403,14 @@ function parseWorkshop(workshop, includePrivate = false) {
 
   const now = Date.now();
   const startsAt = workshop.starts_at ? new Date(workshop.starts_at).getTime() : null;
-  const endsAt = workshop.ends_at ? new Date(workshop.ends_at).getTime() : null;
   const registrationOpensAt = workshop.registration_opens_at ? new Date(workshop.registration_opens_at).getTime() : null;
   const registrationClosesAt = workshop.registration_closes_at ? new Date(workshop.registration_closes_at).getTime() : null;
-  const isRegistrationAvailable = Boolean(workshop.is_visible && workshop.is_registration_open) &&
-    (!registrationOpensAt || now >= registrationOpensAt) &&
-    (!registrationClosesAt || now < registrationClosesAt) &&
-    (!startsAt || now < startsAt) &&
-    (!workshop.max_registrations || workshop.registered_count < workshop.max_registrations);
+  let registrationStatus = "open";
+  if (!workshop.is_registration_open) registrationStatus = "paused";
+  else if (registrationOpensAt && now < registrationOpensAt) registrationStatus = "scheduled";
+  else if (registrationClosesAt && now >= registrationClosesAt) registrationStatus = "ended";
+  else if (workshop.max_registrations && workshop.registered_count >= workshop.max_registrations) registrationStatus = "full";
+  const isRegistrationAvailable = Boolean(workshop.is_visible) && registrationStatus === "open";
 
   return {
     id: workshop.id,
@@ -427,6 +427,7 @@ function parseWorkshop(workshop, includePrivate = false) {
     isVisible: Boolean(workshop.is_visible),
     isRegistrationOpen: Boolean(workshop.is_registration_open),
     isRegistrationAvailable,
+    registrationStatus,
     fields,
     createdAt: workshop.created_at,
     updatedAt: workshop.updated_at
@@ -560,7 +561,6 @@ app.post("/api/workshops/:id/register", workshopRegistrationLimiter, async (req,
        WHERE id = $id AND is_visible = 1 AND is_registration_open = 1
          AND (registration_opens_at IS NULL OR registration_opens_at <= $now)
          AND (registration_closes_at IS NULL OR registration_closes_at > $now)
-         AND (starts_at IS NULL OR starts_at > $now)
          AND (max_registrations IS NULL OR registered_count < max_registrations)`,
       { $id: workshop.id, $now: now }
     );

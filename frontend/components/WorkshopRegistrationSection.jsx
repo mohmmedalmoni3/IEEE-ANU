@@ -8,6 +8,14 @@ function displayDate(value) {
   return value ? new Date(value).toLocaleString("ar-JO") : "غير محدد";
 }
 
+function getRegistrationMessage(workshop) {
+  if (workshop.registrationStatus === "paused") return "أوقف مدير الورشة التسجيل حاليًا.";
+  if (workshop.registrationStatus === "scheduled") return `يفتح التسجيل في ${displayDate(workshop.registrationOpensAt)}.`;
+  if (workshop.registrationStatus === "ended") return "انتهى موعد التسجيل المحدد لهذه الورشة.";
+  if (workshop.registrationStatus === "full") return "اكتمل عدد المقاعد المتاحة لهذه الورشة.";
+  return "التسجيل غير متاح حاليًا.";
+}
+
 export default function WorkshopRegistrationSection({ workshops = [] }) {
   const [values, setValues] = useState({});
   const [states, setStates] = useState({});
@@ -82,7 +90,7 @@ export default function WorkshopRegistrationSection({ workshops = [] }) {
                 </div>
                 <button type="submit" className="submit-btn" disabled={state.loading || state.success}>{state.loading ? "جاري التسجيل..." : state.success ? "تم التسجيل" : "تسجيل في الورشة"}</button>
                 {state.message && <p className={state.success ? "workshop-form-message success" : "workshop-form-message"} role="status">{state.message}</p>}
-              </form> : <p className="public-workshop-closed-note">التسجيل غير متاح حاليًا.</p>}
+              </form> : <p className="public-workshop-closed-note">{getRegistrationMessage(workshop)}</p>}
             </article>
           );
         })}
