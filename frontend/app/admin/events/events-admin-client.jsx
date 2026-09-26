@@ -2,7 +2,12 @@
 
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { Calendar, Clock, MapPin, Plus, Trash2 } from "lucide-react";
+import WorkshopDateTimePicker from "@/components/WorkshopDateTimePicker";
 import { useEffect, useState } from "react";
+
+function toLocalDateTime(value) {
+  return String(value || "").replace(" ", "T").slice(0, 16);
+}
 
 export default function EventsAdminClient() {
   const [events, setEvents] = useState([]);
@@ -35,6 +40,11 @@ export default function EventsAdminClient() {
   async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
+
+    if (!formData.eventDate) {
+      setMessage("يرجى اختيار تاريخ ووقت الحدث.");
+      return;
+    }
     
     try {
       if (editingEvent) {
@@ -72,7 +82,7 @@ export default function EventsAdminClient() {
     setFormData({
       title: event.title,
       description: event.description || "",
-      eventDate: event.eventDate.slice(0, 16),
+      eventDate: toLocalDateTime(event.eventDate),
       location: event.location || ""
     });
     setShowForm(true);
@@ -128,15 +138,16 @@ export default function EventsAdminClient() {
                 placeholder="وصف تفصيلي للحدث..."
               />
             </label>
-            <label>
-              تاريخ ووقت الحدث
-              <input
-                type="datetime-local"
+            <div className="workshop-date-time-field event-date-time-field">
+              <span>تاريخ ووقت الحدث</span>
+              <WorkshopDateTimePicker
                 value={formData.eventDate}
-                onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                required
+                onChange={(value) => setFormData((current) => ({ ...current, eventDate: value }))}
+                label="تاريخ ووقت الحدث"
+                placeholder="اختر موعد الحدث"
+                allowClear
               />
-            </label>
+            </div>
             <label>
               الموقع
               <input
