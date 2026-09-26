@@ -4,6 +4,7 @@ import PageShell from "@/components/PageShell";
 import StatCounter from "@/components/StatCounter";
 import TeamShowcase from "@/components/TeamShowcase";
 import VideoCard from "@/components/VideoCard";
+import WorkshopRegistrationSection from "@/components/WorkshopRegistrationSection";
 import { apiGet } from "@/lib/api";
 import { ArrowLeft, BookOpen, CalendarCheck, Code2, GraduationCap, HelpCircle, Radio, ShieldCheck, Sparkles, Users, Workflow } from "lucide-react";
 import Link from "next/link";
@@ -91,6 +92,8 @@ export default async function HomePage() {
       </section>
 
       <LiveWorkshopCard workshop={site.liveWorkshop} />
+
+      <WorkshopRegistrationSection workshops={site.workshops || []} />
 
       <EventCountdown />
 

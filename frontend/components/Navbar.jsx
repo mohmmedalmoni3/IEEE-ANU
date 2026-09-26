@@ -20,6 +20,7 @@ const adminLinks = [
   { href: "/admin/applications", label: "إدارة الطلبات" },
   { href: "/admin/users", label: "إدارة المستخدمين" },
   { href: "/admin/events", label: "إدارة الأحداث" },
+  { href: "/admin/workshops", label: "إدارة الورش والتسجيل" },
   { href: "/admin/messages", label: "رسائل المستخدمين" },
   { href: "/admin/notifications", label: "التنبيهات" },
   { href: "/admin/activity", label: "سجل النشاط" },

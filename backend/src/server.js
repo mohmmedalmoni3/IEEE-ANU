@@ -122,6 +122,7 @@ app.use("/api", sameOriginGuard);
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 12, keyPrefix: "auth" });
 const applicationLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, keyPrefix: "applications" });
+const workshopRegistrationLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 12, keyPrefix: "workshop-registrations" });
 const allowedStatuses = ["قيد المراجعة", "مقبول", "مرفوض", "بحاجة لمقابلة", "إعادة المقابلة"];
 
 function base64url(input) {
@@ -393,6 +394,60 @@ function parseLiveWorkshop(workshop, includeUrl = false, includeHidden = false) 
   };
 }
 
+function parseWorkshop(workshop, includePrivate = false) {
+  if (!workshop) return null;
+  let fields = [];
+  try {
+    fields = JSON.parse(workshop.fields_json || "[]");
+  } catch {}
+
+  const now = Date.now();
+  const startsAt = workshop.starts_at ? new Date(workshop.starts_at).getTime() : null;
+  const endsAt = workshop.ends_at ? new Date(workshop.ends_at).getTime() : null;
+  const registrationOpensAt = workshop.registration_opens_at ? new Date(workshop.registration_opens_at).getTime() : null;
+  const registrationClosesAt = workshop.registration_closes_at ? new Date(workshop.registration_closes_at).getTime() : null;
+  const isRegistrationAvailable = Boolean(workshop.is_visible && workshop.is_registration_open) &&
+    (!registrationOpensAt || now >= registrationOpensAt) &&
+    (!registrationClosesAt || now < registrationClosesAt) &&
+    (!startsAt || now < startsAt) &&
+    (!workshop.max_registrations || workshop.registered_count < workshop.max_registrations);
+
+  return {
+    id: workshop.id,
+    title: workshop.title,
+    description: workshop.description || "",
+    speaker: workshop.speaker || "",
+    location: workshop.location || "",
+    startsAt: workshop.starts_at,
+    endsAt: workshop.ends_at,
+    registrationOpensAt: workshop.registration_opens_at,
+    registrationClosesAt: workshop.registration_closes_at,
+    maxRegistrations: workshop.max_registrations,
+    registeredCount: Number(workshop.registered_count || 0),
+    isVisible: Boolean(workshop.is_visible),
+    isRegistrationOpen: Boolean(workshop.is_registration_open),
+    isRegistrationAvailable,
+    fields,
+    createdAt: workshop.created_at,
+    updatedAt: workshop.updated_at
+  };
+}
+
+function parseWorkshopRegistration(registration) {
+  let answers = {};
+  try {
+    answers = JSON.parse(registration.answers_json || "{}");
+  } catch {}
+  return {
+    id: registration.id,
+    fullName: registration.full_name,
+    email: registration.email,
+    phone: registration.phone || "",
+    answers,
+    createdAt: registration.created_at
+  };
+}
+
 async function recordLoginEvent(req, user, eventType = "login") {
   const userAgent = String(req.headers["user-agent"] || "");
   const { deviceType, browser, operatingSystem } = parseUserAgent(userAgent);
@@ -459,7 +514,208 @@ app.get("/api/site", async (req, res, next) => {
     const videos = await getAll('SELECT id, title, speaker, youtube_id AS "youtubeId", views, sort_order AS "sortOrder" FROM videos ORDER BY sort_order ASC');
     const products = await getAll('SELECT id, name, price, status, sort_order AS "sortOrder" FROM products ORDER BY sort_order ASC');
     const liveWorkshop = await getOne("SELECT * FROM live_workshop WHERE is_visible = 1 ORDER BY updated_at DESC LIMIT 1");
-    res.json({ stats, creators, videos, products, liveWorkshop: parseLiveWorkshop(liveWorkshop) });
+    const workshops = await getAll("SELECT * FROM workshops WHERE is_visible = 1 ORDER BY starts_at ASC, created_at DESC");
+    res.json({ stats, creators, videos, products, liveWorkshop: parseLiveWorkshop(liveWorkshop), workshops: workshops.map(parseWorkshop) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/workshops", async (req, res, next) => {
+  try {
+    const workshops = await getAll("SELECT * FROM workshops WHERE is_visible = 1 ORDER BY starts_at ASC, created_at DESC");
+    res.json({ workshops: workshops.map(parseWorkshop) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/workshops/:id/register", workshopRegistrationLimiter, async (req, res, next) => {
+  try {
+    const workshop = await getOne("SELECT * FROM workshops WHERE id = $id", { $id: req.params.id });
+    if (!workshop || !workshop.is_visible) return res.status(404).json({ message: "الورشة غير متاحة" });
+
+    const fullName = cleanText(req.body.fullName, 180);
+    const email = cleanText(req.body.email, 180).toLowerCase();
+    const phone = cleanText(req.body.phone, 50);
+    if (!fullName || !isValidEmail(email)) {
+      return res.status(400).json({ message: "يرجى إدخال الاسم والبريد الإلكتروني بشكل صحيح" });
+    }
+
+    let fields = [];
+    try { fields = JSON.parse(workshop.fields_json || "[]"); } catch {}
+    const answers = {};
+    for (const field of fields) {
+      const value = cleanText(req.body.answers?.[field.id], 1000);
+      if (field.required && !value) return res.status(400).json({ message: `الحقل «${field.label}» مطلوب` });
+      if (field.type === "select" && value && !field.options?.includes(value)) {
+        return res.status(400).json({ message: `القيمة المختارة غير صالحة للحقل «${field.label}»` });
+      }
+      answers[field.id] = value;
+    }
+
+    const now = new Date().toISOString();
+    const reservation = await run(
+      `UPDATE workshops SET registered_count = registered_count + 1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $id AND is_visible = 1 AND is_registration_open = 1
+         AND (registration_opens_at IS NULL OR registration_opens_at <= $now)
+         AND (registration_closes_at IS NULL OR registration_closes_at > $now)
+         AND (starts_at IS NULL OR starts_at > $now)
+         AND (max_registrations IS NULL OR registered_count < max_registrations)`,
+      { $id: workshop.id, $now: now }
+    );
+    const reserved = reservation.rowCount ?? reservation.changes ?? 0;
+    if (!reserved) return res.status(409).json({ message: "التسجيل مغلق أو اكتمل العدد المتاح" });
+
+    try {
+      await run(
+        `INSERT INTO workshop_registrations (id, workshop_id, full_name, email, phone, answers_json)
+         VALUES ($id, $workshopId, $fullName, $email, $phone, $answers)`,
+        {
+          $id: crypto.randomUUID(), $workshopId: workshop.id, $fullName, $email,
+          $phone: phone || null, $answers: JSON.stringify(answers)
+        }
+      );
+    } catch (error) {
+      await run("UPDATE workshops SET registered_count = CASE WHEN registered_count > 0 THEN registered_count - 1 ELSE 0 END WHERE id = $id", { $id: workshop.id });
+      if (String(error.code) === "23505" || /UNIQUE constraint failed/i.test(error.message || "")) {
+        return res.status(409).json({ message: "هذا البريد مسجل في الورشة مسبقًا" });
+      }
+      throw error;
+    }
+    res.status(201).json({ message: "تم تسجيلك في الورشة بنجاح" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/admin/workshops", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const workshops = await getAll("SELECT * FROM workshops ORDER BY starts_at ASC, created_at DESC");
+    res.json({ workshops: workshops.map(parseWorkshop) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+function normalizeWorkshopPayload(body) {
+  const title = cleanText(body.title, 180);
+  const description = cleanText(body.description, 1500);
+  const speaker = cleanText(body.speaker, 180);
+  const location = cleanText(body.location, 240);
+  const startsAt = cleanText(body.startsAt, 40) || null;
+  const endsAt = cleanText(body.endsAt, 40) || null;
+  const registrationOpensAt = cleanText(body.registrationOpensAt, 40) || null;
+  const registrationClosesAt = cleanText(body.registrationClosesAt, 40) || null;
+  const maxRegistrations = body.maxRegistrations === "" || body.maxRegistrations == null ? null : Number(body.maxRegistrations);
+  const fields = Array.isArray(body.fields) ? body.fields.slice(0, 20).map((field, index) => ({
+    id: cleanText(field.id, 80) || `field-${index + 1}`,
+    label: cleanText(field.label, 120),
+    type: ["text", "number", "textarea", "select"].includes(field.type) ? field.type : "text",
+    required: Boolean(field.required),
+    options: field.type === "select" ? String(field.options || "").split(/\r?\n/).map((item) => cleanText(item, 100)).filter(Boolean).slice(0, 30) : []
+  })).filter((field) => field.label) : [];
+
+  if (!title) throw new Error("عنوان الورشة مطلوب");
+  if (!startsAt || !endsAt) throw new Error("موعد بداية ونهاية الورشة مطلوبان");
+  if (maxRegistrations !== null && (!Number.isInteger(maxRegistrations) || maxRegistrations < 1)) {
+    throw new Error("الحد الأقصى للمسجلين يجب أن يكون رقمًا صحيحًا أكبر من صفر");
+  }
+  for (const [label, value] of [["موعد البداية", startsAt], ["موعد النهاية", endsAt], ["بداية التسجيل", registrationOpensAt], ["نهاية التسجيل", registrationClosesAt]]) {
+    if (value && Number.isNaN(Date.parse(value))) throw new Error(`${label} غير صالح`);
+  }
+  if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) throw new Error("موعد نهاية الورشة يجب أن يكون بعد بدايتها");
+  if (registrationOpensAt && registrationClosesAt && Date.parse(registrationClosesAt) <= Date.parse(registrationOpensAt)) {
+    throw new Error("نهاية التسجيل يجب أن تكون بعد بدايته");
+  }
+  if (fields.some((field) => field.type === "select" && !field.options.length)) throw new Error("أضف خيارات لكل حقل من نوع قائمة");
+
+  return {
+    title, description: description || null, speaker: speaker || null, location: location || null,
+    startsAt, endsAt, registrationOpensAt, registrationClosesAt, maxRegistrations,
+    isVisible: body.isVisible ? 1 : 0,
+    isRegistrationOpen: body.isRegistrationOpen ? 1 : 0,
+    fieldsJson: JSON.stringify(fields)
+  };
+}
+
+app.post("/api/admin/workshops", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const input = normalizeWorkshopPayload(req.body);
+    const id = crypto.randomUUID();
+    await run(
+      `INSERT INTO workshops (id, title, description, speaker, location, starts_at, ends_at,
+        registration_opens_at, registration_closes_at, max_registrations, is_visible, is_registration_open, fields_json)
+       VALUES ($id, $title, $description, $speaker, $location, $startsAt, $endsAt,
+        $registrationOpensAt, $registrationClosesAt, $maxRegistrations, $isVisible, $isRegistrationOpen, $fieldsJson)`,
+      { $id: id, $title: input.title, $description: input.description, $speaker: input.speaker, $location: input.location,
+        $startsAt: input.startsAt, $endsAt: input.endsAt, $registrationOpensAt: input.registrationOpensAt,
+        $registrationClosesAt: input.registrationClosesAt, $maxRegistrations: input.maxRegistrations,
+        $isVisible: input.isVisible, $isRegistrationOpen: input.isRegistrationOpen, $fieldsJson: input.fieldsJson }
+    );
+    const workshop = await getOne("SELECT * FROM workshops WHERE id = $id", { $id: id });
+    res.status(201).json({ workshop: parseWorkshop(workshop) });
+  } catch (error) {
+    if (error.message?.includes("مطلوب") || error.message?.includes("يجب") || error.message?.includes("غير صالح") || error.message?.includes("أضف")) {
+      return res.status(400).json({ message: error.message });
+    }
+    next(error);
+  }
+});
+
+app.patch("/api/admin/workshops/:id", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const existing = await getOne("SELECT id FROM workshops WHERE id = $id", { $id: req.params.id });
+    if (!existing) return res.status(404).json({ message: "الورشة غير موجودة" });
+    const input = normalizeWorkshopPayload(req.body);
+    await run(
+      `UPDATE workshops SET title = $title, description = $description, speaker = $speaker, location = $location,
+        starts_at = $startsAt, ends_at = $endsAt, registration_opens_at = $registrationOpensAt,
+        registration_closes_at = $registrationClosesAt, max_registrations = $maxRegistrations,
+        is_visible = $isVisible, is_registration_open = $isRegistrationOpen, fields_json = $fieldsJson,
+        updated_at = CURRENT_TIMESTAMP WHERE id = $id`,
+      { $id: req.params.id, $title: input.title, $description: input.description, $speaker: input.speaker, $location: input.location,
+        $startsAt: input.startsAt, $endsAt: input.endsAt, $registrationOpensAt: input.registrationOpensAt,
+        $registrationClosesAt: input.registrationClosesAt, $maxRegistrations: input.maxRegistrations,
+        $isVisible: input.isVisible, $isRegistrationOpen: input.isRegistrationOpen, $fieldsJson: input.fieldsJson }
+    );
+    const workshop = await getOne("SELECT * FROM workshops WHERE id = $id", { $id: req.params.id });
+    res.json({ workshop: parseWorkshop(workshop) });
+  } catch (error) {
+    if (error.message?.includes("مطلوب") || error.message?.includes("يجب") || error.message?.includes("غير صالح") || error.message?.includes("أضف")) {
+      return res.status(400).json({ message: error.message });
+    }
+    next(error);
+  }
+});
+
+app.delete("/api/admin/workshops/:id", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    await run("DELETE FROM workshops WHERE id = $id", { $id: req.params.id });
+    res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/admin/workshops/:id/registrations", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const registrations = await getAll("SELECT * FROM workshop_registrations WHERE workshop_id = $id ORDER BY created_at DESC", { $id: req.params.id });
+    res.json({ registrations: registrations.map(parseWorkshopRegistration) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.delete("/api/admin/workshops/:id/registrations/:registrationId", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const result = await run("DELETE FROM workshop_registrations WHERE id = $registrationId AND workshop_id = $id", {
+      $registrationId: req.params.registrationId, $id: req.params.id
+    });
+    const deleted = result.rowCount ?? result.changes ?? 0;
+    if (!deleted) return res.status(404).json({ message: "التسجيل غير موجود" });
+    await run("UPDATE workshops SET registered_count = CASE WHEN registered_count > 0 THEN registered_count - 1 ELSE 0 END WHERE id = $id", { $id: req.params.id });
+    res.json({ ok: true });
   } catch (error) {
     next(error);
   }
@@ -1961,4 +2217,3 @@ app.use((error, req, res, next) => {
 app.listen(port, () => {
   console.log(`IEEE ANU API running on http://localhost:${port}`);
 });
-

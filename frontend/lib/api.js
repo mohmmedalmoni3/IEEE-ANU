@@ -42,7 +42,6 @@ async function parseJson(response) {
 export async function apiGet(path) {
   const response = await fetch(getApiUrl(path), {
     cache: "no-store",
-    next: { revalidate: 0 },
     credentials: "include",
     headers: getAuthHeaders()
   });

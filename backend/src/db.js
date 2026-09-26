@@ -198,6 +198,36 @@ export async function initDb() {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE IF NOT EXISTS workshops (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        speaker TEXT,
+        location TEXT,
+        starts_at TEXT,
+        ends_at TEXT,
+        registration_opens_at TEXT,
+        registration_closes_at TEXT,
+        max_registrations INTEGER,
+        registered_count INTEGER NOT NULL DEFAULT 0,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        is_registration_open INTEGER NOT NULL DEFAULT 1,
+        fields_json TEXT NOT NULL DEFAULT '[]',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS workshop_registrations (
+        id TEXT PRIMARY KEY,
+        workshop_id TEXT NOT NULL REFERENCES workshops(id) ON DELETE CASCADE,
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT,
+        answers_json TEXT NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (workshop_id, email)
+      );
+
       CREATE TABLE IF NOT EXISTS settings (
         id TEXT PRIMARY KEY,
         key TEXT NOT NULL UNIQUE,
@@ -416,6 +446,37 @@ export async function initDb() {
       is_live INTEGER NOT NULL DEFAULT 0,
       is_visible INTEGER NOT NULL DEFAULT 1,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS workshops (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      speaker TEXT,
+      location TEXT,
+      starts_at TEXT,
+      ends_at TEXT,
+      registration_opens_at TEXT,
+      registration_closes_at TEXT,
+      max_registrations INTEGER,
+      registered_count INTEGER NOT NULL DEFAULT 0,
+      is_visible INTEGER NOT NULL DEFAULT 1,
+      is_registration_open INTEGER NOT NULL DEFAULT 1,
+      fields_json TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS workshop_registrations (
+      id TEXT PRIMARY KEY,
+      workshop_id TEXT NOT NULL,
+      full_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT,
+      answers_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (workshop_id, email),
+      FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS settings (
