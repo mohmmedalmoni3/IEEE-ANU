@@ -4351,30 +4351,32 @@ td small {
   }
 
   .team-member-card {
-    width: 184px;
-    padding: 20px 18px;
+    width: clamp(250px, 82vw, 320px);
+    min-height: 290px;
+    padding: 26px 22px;
+    gap: 18px;
   }
 
   .team-member-image {
-    width: 88px;
-    height: 88px;
+    width: 122px;
+    height: 122px;
   }
 
   .team-member-placeholder {
-    font-size: 32px;
+    font-size: 40px;
   }
 
   .team-member-info h3 {
-    font-size: 15px;
+    font-size: 18px;
   }
 
   .team-member-info p {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .team-portfolio-link {
-    font-size: 10px;
-    padding: 3px 6px;
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }
 
