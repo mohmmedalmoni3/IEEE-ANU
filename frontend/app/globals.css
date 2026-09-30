@@ -1125,16 +1125,16 @@ th {
 
 .team-member-card {
   flex-shrink: 0;
-  width: 200px;
+  width: 250px;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 26px 24px;
   border: 1px solid rgba(32, 168, 255, 0.15);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .team-member-card:hover {
@@ -1144,8 +1144,8 @@ th {
 }
 
 .team-member-image {
-  width: 100px;
-  height: 100px;
+  width: 124px;
+  height: 124px;
   border-radius: 50%;
   overflow: hidden;
   position: relative;
@@ -1169,14 +1169,14 @@ th {
 }
 
 .team-member-info h3 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #ffffff;
   margin-bottom: 4px;
 }
 
 .team-member-info p {
-  font-size: 14px;
+  font-size: 15px;
   color: rgba(255, 255, 255, 0.68);
   line-height: 1.4;
 }
@@ -4351,25 +4351,25 @@ td small {
   }
 
   .team-member-card {
-    width: 140px;
-    padding: 16px;
+    width: 184px;
+    padding: 20px 18px;
   }
 
   .team-member-image {
-    width: 70px;
-    height: 70px;
+    width: 88px;
+    height: 88px;
   }
 
   .team-member-placeholder {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .team-member-info h3 {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .team-member-info p {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .team-portfolio-link {
