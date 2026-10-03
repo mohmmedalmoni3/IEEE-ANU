@@ -55,7 +55,7 @@ export default function Navbar() {
           <Image src="/IEEE.png" alt="IEEE ANU" width={54} height={54} className="logo-img" />
           <div className="logo-text">
             <h2>IEEE ANU</h2>
-            <span>Ajloun Unv</span>
+            <span>Ajloun University</span>
           </div>
         </Link>
 
