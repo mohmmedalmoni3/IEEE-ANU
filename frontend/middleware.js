@@ -39,7 +39,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - not-found (404 page itself)
+     * - paths containing a file extension (public images, fonts, and other assets)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|not-found).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|not-found|.*\\..*).*)",
   ],
 };

@@ -39,12 +39,17 @@ async function parseJson(response) {
   return response.json().catch(() => ({}));
 }
 
-export async function apiGet(path) {
-  const response = await fetch(getApiUrl(path), {
-    cache: "no-store",
+export async function apiGet(path, fetchOptions = {}) {
+  const requestOptions = {
     credentials: "include",
-    headers: getAuthHeaders()
-  });
+    headers: getAuthHeaders(),
+    ...fetchOptions
+  };
+  if (!("cache" in fetchOptions) && !fetchOptions.next?.revalidate) {
+    requestOptions.cache = "no-store";
+  }
+
+  const response = await fetch(getApiUrl(path), requestOptions);
   const data = await parseJson(response);
   if (!response.ok) throw new Error(data.message || "فشل الاتصال بالخادم");
   return data;

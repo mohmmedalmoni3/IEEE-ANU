@@ -9,6 +9,8 @@ import { apiGet } from "@/lib/api";
 import { ArrowLeft, BookOpen, CalendarCheck, Code2, GraduationCap, HelpCircle, Radio, ShieldCheck, Sparkles, Users, Workflow } from "lucide-react";
 import Link from "next/link";
 
+export const revalidate = 60;
+
 const fallback = {
   stats: [
     { label: "المشتركون الآن", value: 50 },
@@ -67,7 +69,7 @@ const journey = [
 export default async function HomePage() {
   let site = fallback;
   try {
-    site = await apiGet("/site");
+    site = await apiGet("/site", { next: { revalidate: 60 } });
   } catch {}
 
   const videos = site.videos || [];
