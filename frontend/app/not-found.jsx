@@ -14,6 +14,12 @@ export default function NotFound() {
           <p className="not-found-description">
             عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.
           </p>
+          <p className="not-found-support-message">
+            إذا تم تقييد الوصول إلى حسابك أو كنت تعتقد أن هذا خطأ، يرجى التواصل مع الدعم الفني للمساعدة.
+          </p>
+          <a className="not-found-support-link" href="mailto:support@ieeeanu.com">
+            التواصل مع الدعم الفني
+          </a>
           <Link href="/" className="not-found-button">
             <Home size={20} />
             <span>العودة للرئيسية</span>

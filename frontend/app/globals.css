@@ -4443,6 +4443,27 @@ td small {
   line-height: 1.6;
 }
 
+.not-found-support-message {
+  margin: -14px 0 10px;
+  color: rgba(224, 236, 247, 0.78);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.not-found-support-link {
+  display: inline-flex;
+  margin-bottom: 24px;
+  color: #79d5ff;
+  font-size: 15px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.not-found-support-link:hover {
+  color: #b5e9ff;
+}
+
 .not-found-button {
   display: inline-flex;
   align-items: center;

@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-
 export async function middleware(request) {
-  const cookieStore = cookies();
-  const token = cookieStore.get("token");
+  const token = request.cookies.get("ieee_session")?.value || request.cookies.get("token")?.value;
 
   if (token) {
     try {
-      // Get user data from backend to check show_404
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+      const configuredApiUrl = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
+      const authUrl = configuredApiUrl.startsWith("http")
+        ? `${configuredApiUrl}/auth/me`
+        : new URL(`${configuredApiUrl}/auth/me`, request.url);
+      const response = await fetch(authUrl, {
         headers: {
-          Authorization: `Bearer ${token.value}`,
+          Cookie: `ieee_session=${token}`
         },
+        cache: "no-store"
       });
 
       if (response.ok) {
