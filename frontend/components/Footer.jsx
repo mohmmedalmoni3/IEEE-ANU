@@ -40,7 +40,7 @@ export default function Footer() {
         <p>© 2026 IEEE ANU - جميع الحقوق محفوظة</p>
         <p className="developers-credit">
           Developed by{" "}
-          <a href="https://mohamme-cmd.github.io/aboutme/" target="_blank" rel="noreferrer">Mohammed Almomani</a>
+          <a href="https://mohammedalmomani.me/" target="_blank" rel="noreferrer">Mohammed Almomani</a>
         </p>
       </div>
     </footer>
