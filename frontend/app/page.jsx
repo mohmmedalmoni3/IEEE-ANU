@@ -179,12 +179,7 @@ export default async function HomePage() {
           <p>مختارات من قناة IEEE ANU الرسمية</p>
         </div>
         <div className="youtube-grid">
-          {videos.length ? videos.map((video) => <VideoCard key={video.youtubeId} video={video} />) : (
-            <article className="info-card center">
-              <h3>لا توجد فيديوهات مضافة بعد</h3>
-              <p>سيتم عرض فيديوهات IEEE ANU هنا عند توفرها.</p>
-            </article>
-          )}
+          {videos.map((video) => <VideoCard key={video.youtubeId} video={video} />)}
         </div>
         <div className="view-all">
           <a className="btn-view-all" href="https://www.youtube.com/@IEEEANUStudentBranch" target="_blank" rel="noreferrer">
