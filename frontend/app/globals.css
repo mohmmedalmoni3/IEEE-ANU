@@ -5310,7 +5310,146 @@ td small {
   cursor: not-allowed;
 }
 
+.membership-offer {
+  width: min(1180px, calc(100% - 40px));
+  margin: -24px auto 56px;
+}
+
+.membership-offer-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  align-items: center;
+  gap: 32px;
+  overflow: hidden;
+  padding: clamp(26px, 5vw, 58px);
+  border: 1px solid rgba(45, 161, 255, 0.35);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 86% 16%, rgba(0, 150, 255, 0.2), transparent 32%),
+    linear-gradient(130deg, #0d1e31, #08111d 66%);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+}
+
+.membership-offer-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.membership-offer-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 13px;
+  border: 1px solid rgba(67, 177, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 150, 255, 0.1);
+  color: #8ed2ff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.membership-offer-copy h2 {
+  margin: 20px 0 12px;
+  color: #fff;
+  font-size: clamp(1.75rem, 4vw, 2.65rem);
+}
+
+.membership-offer-description {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(236, 245, 255, 0.76);
+  font-size: 1.05rem;
+  line-height: 1.9;
+}
+
+.membership-offer-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin: 22px 0 26px;
+  color: #d7eaff;
+}
+
+.membership-offer-benefits span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.membership-offer-benefits svg {
+  color: #55bdff;
+}
+
+.membership-offer-cta {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 23px;
+  border-radius: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.membership-offer-note {
+  margin: 13px 0 0;
+  color: rgba(222, 234, 248, 0.6);
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+.membership-offer-emblem {
+  position: relative;
+  display: grid;
+  width: 210px;
+  aspect-ratio: 1;
+  place-content: center;
+  justify-self: center;
+  border: 1px solid rgba(107, 194, 255, 0.42);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(17, 106, 171, 0.42), rgba(4, 18, 32, 0.12) 68%);
+  color: #b7e5ff;
+  text-align: center;
+  box-shadow: 0 0 70px rgba(0, 150, 255, 0.18), inset 0 0 35px rgba(0, 150, 255, 0.1);
+}
+
+.membership-offer-emblem span {
+  margin-top: 5px;
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.membership-offer-emblem-link {
+  position: absolute;
+  inset-block-start: 22px;
+  inset-inline-end: 25px;
+  color: #65c5ff;
+}
+
+.membership-branch-note {
+  margin: 16px 2px 0;
+  color: rgba(228, 238, 249, 0.68);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.membership-branch-note strong {
+  color: #8ed2ff;
+}
+
 @media (max-width: 860px) {
+  .membership-offer-card {
+    grid-template-columns: minmax(0, 1fr) 170px;
+    gap: 18px;
+  }
+
+  .membership-offer-emblem {
+    width: 160px;
+  }
+
   .member-hero-panel,
   .member-dashboard-grid,
   .member-dashboard-grid.lower,
@@ -5329,6 +5468,33 @@ td small {
   }
 
   .member-footer-actions > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .membership-offer {
+    width: min(100% - 28px, 1180px);
+    margin-top: -16px;
+    margin-bottom: 40px;
+  }
+
+  .membership-offer-card {
+    grid-template-columns: 1fr;
+    padding: 25px 21px;
+    border-radius: 22px;
+  }
+
+  .membership-offer-emblem {
+    display: none;
+  }
+
+  .membership-offer-benefits {
+    display: grid;
+    gap: 11px;
+  }
+
+  .membership-offer-cta {
     width: 100%;
   }
 }
