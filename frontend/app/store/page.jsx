@@ -27,7 +27,7 @@ export default async function StorePage() {
             <span className="membership-offer-eyebrow"><Award size={17} /> عضوية IEEE العالمية</span>
             <h2 id="membership-offer-title">خطوتك التالية تبدأ من هنا</h2>
             <p className="membership-offer-description">
-              انضم إلى مجتمع IEEE العالمي، واختر فئة العضوية المناسبة لك. ستكمل التسجيل والدفع الآمن مباشرةً عبر الموقع الرسمي لـ IEEE.
+              ابدأ طلب عضوية IEEE الطلابية، وأكمل بياناتك وإجراءات الدفع مباشرةً عبر الموقع الرسمي لـ IEEE.
             </p>
             <div className="membership-offer-benefits">
               <span><Users size={18} /> مجتمع تقني عالمي</span>
@@ -35,14 +35,14 @@ export default async function StorePage() {
             </div>
             <a
               className="btn btn-primary membership-offer-cta"
-              href="https://www.ieee.org/join"
+              href="https://www.ieee.org/membership-application/public/join.html?grade=Student"
               target="_blank"
               rel="noopener noreferrer"
             >
-              اشترِ عضوية IEEE <ArrowUpLeft size={19} />
+              اشترِ عضوية الطالب <ArrowUpLeft size={19} />
             </a>
             <p className="membership-offer-note">
-              ستنتقل إلى موقع IEEE الرسمي؛ السعر وخيارات العضوية يحددهما IEEE حسب فئتك وبلدك.
+              ستنتقل مباشرةً إلى نموذج الانضمام الطلابي الرسمي؛ وتظهر الرسوم النهائية أثناء التسجيل.
             </p>
           </div>
           <div className="membership-offer-emblem" aria-hidden="true">
@@ -52,7 +52,7 @@ export default async function StorePage() {
           </div>
         </div>
         <p className="membership-branch-note">
-          <strong>تنويه:</strong> هذه عضوية IEEE العالمية. الانضمام إلى فرع IEEE ANU الطلابي منفصل عنها ولا يتم شراؤه من هذا الرابط.
+          <strong>تنويه:</strong> هذه عضوية IEEE العالمية للطلاب، وهي منفصلة عن عضوية فرع IEEE ANU الطلابي.
         </p>
       </section>
       <section className="page-content">
