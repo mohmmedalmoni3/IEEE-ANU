@@ -51,9 +51,6 @@ export default async function StorePage() {
             <ExternalLink size={18} className="membership-offer-emblem-link" />
           </div>
         </div>
-        <p className="membership-branch-note">
-          <strong>تنويه:</strong> هذه عضوية IEEE العالمية للطلاب، وهي منفصلة عن عضوية فرع IEEE ANU الطلابي.
-        </p>
       </section>
       <section className="page-content">
         <AuthGate title="المتجر مخصص للأعضاء" message="سجل الدخول أو أنشئ حسابًا حتى تتمكن من مشاهدة خدمات ومنتجات المتجر.">
