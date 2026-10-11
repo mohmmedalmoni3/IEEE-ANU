@@ -9,7 +9,8 @@ import { apiGet } from "@/lib/api";
 import { ArrowLeft, BookOpen, CalendarCheck, Code2, GraduationCap, HelpCircle, Radio, ShieldCheck, Sparkles, Users, Workflow } from "lucide-react";
 import Link from "next/link";
 
-export const revalidate = 60;
+// Keep the homepage on the CDN for longer so visits do not wait on a sleeping API.
+export const revalidate = 3600;
 
 const fallback = {
   stats: [
@@ -69,7 +70,7 @@ const journey = [
 export default async function HomePage() {
   let site = fallback;
   try {
-    site = await apiGet("/site", { next: { revalidate: 60 } });
+    site = await apiGet("/site", { next: { revalidate: 3600 } });
   } catch {}
 
   const videos = site.videos || [];
