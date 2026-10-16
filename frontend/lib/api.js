@@ -1,4 +1,7 @@
+import { createSessionCache } from "./session-cache.mjs";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+const sessionCache = createSessionCache();
 
 function getApiUrl(path) {
   if (API_URL.startsWith("http")) {
@@ -8,6 +11,12 @@ function getApiUrl(path) {
   if (typeof window !== "undefined") {
     return `${API_URL}${path}`;
   }
+
+  // Server rendering can reach the API directly instead of travelling through
+  // this deployment's public /api rewrite and another frontend request.
+  const internalApiUrl = process.env.API_INTERNAL_URL ||
+    (process.env.VERCEL ? "https://ieee-anu.onrender.com/api" : "");
+  if (internalApiUrl) return `${internalApiUrl.replace(/\/$/, "")}${path}`;
 
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -39,7 +48,7 @@ async function parseJson(response) {
   return response.json().catch(() => ({}));
 }
 
-export async function apiGet(path, fetchOptions = {}) {
+async function requestGet(path, fetchOptions = {}) {
   const requestOptions = {
     credentials: "include",
     headers: getAuthHeaders(),
@@ -51,8 +60,26 @@ export async function apiGet(path, fetchOptions = {}) {
 
   const response = await fetch(getApiUrl(path), requestOptions);
   const data = await parseJson(response);
-  if (!response.ok) throw new Error(data.message || "فشل الاتصال بالخادم");
+  if (!response.ok) {
+    const error = new Error(data.message || "فشل الاتصال بالخادم");
+    error.status = response.status;
+    throw error;
+  }
   return data;
+}
+
+export function apiGet(path, fetchOptions = {}) {
+  if (typeof window !== "undefined" && path === "/auth/me" && Object.keys(fetchOptions).length === 0) {
+    return sessionCache.read(() => requestGet(path)).then((data) => {
+      if (!data?.user) {
+        const error = new Error("يجب تسجيل الدخول أولا");
+        error.status = 401;
+        throw error;
+      }
+      return data;
+    });
+  }
+  return requestGet(path, fetchOptions);
 }
 
 export async function apiPost(path, payload) {
@@ -68,6 +95,15 @@ export async function apiPost(path, payload) {
 
   const data = await parseJson(response);
   if (!response.ok) throw new Error(data.message || "حدث خطأ غير متوقع");
+  if (typeof window !== "undefined") {
+    if (["/auth/login", "/auth/register"].includes(path) && data.user && data.token) {
+      sessionCache.write({ user: data.user });
+      window.dispatchEvent(new Event("ieee:session-change"));
+    } else if (path === "/auth/logout") {
+      sessionCache.write({ user: null });
+      window.dispatchEvent(new Event("ieee:session-change"));
+    }
+  }
   return data;
 }
 

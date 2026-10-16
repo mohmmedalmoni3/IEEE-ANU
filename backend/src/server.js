@@ -211,6 +211,9 @@ async function requireAuth(req, res, next) {
     if (!payload) return res.status(401).json({ message: "يجب تسجيل الدخول أولا" });
     const user = await applyConfiguredAdmin(await getOne("SELECT * FROM users WHERE id = $id", { $id: payload.sub }));
     if (!user) return res.status(401).json({ message: "الجلسة غير صالحة" });
+    if (user.show_404 === 1 && req.path !== "/api/auth/me") {
+      return res.status(403).json({ code: "ACCOUNT_RESTRICTED", message: "تواصل مع الدعم الفني لإعادة تفعيل حسابك" });
+    }
     req.user = user;
     next();
   } catch (error) {
@@ -517,17 +520,24 @@ async function createAdminNotification({ type, title, message, targetType, targe
 }
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, service: "IEEE ANU API", database: databaseProvider });
+  res.json({
+    ok: true,
+    service: "IEEE ANU API",
+    database: databaseProvider,
+    revision: process.env.RENDER_GIT_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || null
+  });
 });
 
 app.get("/api/site", async (req, res, next) => {
   try {
-    const stats = await getAll('SELECT id, label, value, sort_order AS "sortOrder" FROM stats ORDER BY sort_order ASC');
-    const creators = await getAll('SELECT id, name, role, platform, followers, url, sort_order AS "sortOrder" FROM creators ORDER BY sort_order ASC');
-    const videos = await getAll('SELECT id, title, speaker, youtube_id AS "youtubeId", views, sort_order AS "sortOrder" FROM videos ORDER BY sort_order ASC');
-    const products = await getAll('SELECT id, name, price, status, sort_order AS "sortOrder" FROM products ORDER BY sort_order ASC');
-    const liveWorkshop = await getOne("SELECT * FROM live_workshop WHERE is_visible = 1 ORDER BY updated_at DESC LIMIT 1");
-    const workshops = await getAll("SELECT * FROM workshops WHERE is_visible = 1 ORDER BY starts_at ASC, created_at DESC");
+    const [stats, creators, videos, products, liveWorkshop, workshops] = await Promise.all([
+      getAll('SELECT id, label, value, sort_order AS "sortOrder" FROM stats ORDER BY sort_order ASC'),
+      getAll('SELECT id, name, role, platform, followers, url, sort_order AS "sortOrder" FROM creators ORDER BY sort_order ASC'),
+      getAll('SELECT id, title, speaker, youtube_id AS "youtubeId", views, sort_order AS "sortOrder" FROM videos ORDER BY sort_order ASC'),
+      getAll('SELECT id, name, price, status, sort_order AS "sortOrder" FROM products ORDER BY sort_order ASC'),
+      getOne("SELECT * FROM live_workshop WHERE is_visible = 1 ORDER BY updated_at DESC LIMIT 1"),
+      getAll("SELECT * FROM workshops WHERE is_visible = 1 ORDER BY starts_at ASC, created_at DESC")
+    ]);
     res.json({ stats, creators, videos, products, liveWorkshop: parseLiveWorkshop(liveWorkshop), workshops: workshops.map(parseWorkshop) });
   } catch (error) {
     next(error);
@@ -1101,21 +1111,23 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
       });
     }
 
-    const exists = await getOne("SELECT id FROM users WHERE email = $email OR username = $username", {
+    const accountState = await getOne(`SELECT
+      EXISTS(SELECT 1 FROM users WHERE email = $email OR username = $username) AS account_exists,
+      EXISTS(SELECT 1 FROM users) AS has_users`, {
       $email: email,
       $username: username
     });
 
-    if (exists) return res.status(409).json({ message: "الحساب موجود مسبقا" });
+    if (accountState.account_exists) return res.status(409).json({ message: "الحساب موجود مسبقا" });
 
     const id = crypto.randomUUID();
     const passwordHash = await bcrypt.hash(password, 12);
-    const usersCount = (await getOne("SELECT COUNT(*) AS count FROM users"))?.count || 0;
-    const role = usersCount === 0 || adminEmails.includes(email) ? "admin" : "member";
+    const role = !accountState.has_users || adminEmails.includes(email) ? "admin" : "member";
 
-    await run(
+    const user = await getOne(
       `INSERT INTO users (id, firstname, lastname, username, email, discord, password_hash, role)
-       VALUES ($id, $firstname, $lastname, $username, $email, $discord, $passwordHash, $role)`,
+       VALUES ($id, $firstname, $lastname, $username, $email, $discord, $passwordHash, $role)
+       RETURNING *`,
       {
         $id: id,
         $firstname: firstname,
@@ -1128,21 +1140,26 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
       }
     );
 
-    const user = await getOne("SELECT * FROM users WHERE id = $id", { $id: id });
-    await createAdminNotification({
-      type: "new_user",
-      title: "مستخدم جديد",
-      message: `تم إنشاء حساب جديد باسم ${firstname} ${lastname}`,
-      targetType: "user",
-      targetId: id
-    });
-    await recordLoginEvent(req, user, "register");
+    // Persist both audit records together; an audit failure must not turn a saved account into a failed signup.
+    const auditResults = await Promise.allSettled([
+      createAdminNotification({
+        type: "new_user",
+        title: "مستخدم جديد",
+        message: `تم إنشاء حساب جديد باسم ${firstname} ${lastname}`,
+        targetType: "user",
+        targetId: id
+      }),
+      recordLoginEvent(req, user, "register")
+    ]);
+    for (const result of auditResults) {
+      if (result.status === "rejected") console.error("Registration audit failed:", result.reason);
+    }
     const token = setSessionCookie(res, user);
-res.json({
-  user: publicUser(user),
-  token
-});
+    res.status(201).json({ user: publicUser(user), token });
   } catch (error) {
+    if (["23505", "SQLITE_CONSTRAINT_UNIQUE"].includes(error.code)) {
+      return res.status(409).json({ message: "الحساب موجود مسبقا" });
+    }
     next(error);
   }
 });

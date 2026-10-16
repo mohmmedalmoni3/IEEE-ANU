@@ -1,12 +1,15 @@
 /** @type {import('next').NextConfig} */
 const isProduction = process.env.NODE_ENV === "production";
+const configuredApiOrigin = process.env.NEXT_PUBLIC_API_URL?.startsWith("http")
+  ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
+  : "";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: https: http:",
-  "connect-src 'self' http://localhost:4000 https://ieee-anu.onrender.com https:",
+  `connect-src 'self' http://localhost:4000 https://ieee-anu.onrender.com https: ${configuredApiOrigin}`.trim(),
   "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://meet.google.com",
   "object-src 'none'",
   "base-uri 'self'",
@@ -19,14 +22,15 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "img.youtube.com" },
-      { protocol: "https", hostname: "ui-avatars.com" },
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" }
-    ],
-    unoptimized: true
+      { protocol: "https", hostname: "ui-avatars.com" }
+    ]
   },
   async headers() {
     return [
+      {
+        source: "/fonts/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }]
+      },
       {
         source: "/(.*)",
         headers: [

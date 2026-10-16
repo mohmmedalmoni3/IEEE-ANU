@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 function displayDate(value) {
-  return value ? new Date(value).toLocaleString("ar-JO") : "غير محدد";
+  return value ? new Date(value).toLocaleString("ar-JO", { timeZone: "Asia/Amman" }) : "غير محدد";
 }
 
 function getRegistrationMessage(workshop) {

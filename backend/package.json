@@ -7,7 +7,8 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db:seed": "node src/seed.js",
-    "db:migrate:sqlite": "node src/migrate-sqlite-to-postgres.js"
+    "db:migrate:sqlite": "node src/migrate-sqlite-to-postgres.js",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

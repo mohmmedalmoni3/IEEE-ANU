@@ -16,7 +16,7 @@ export default function VideoCard({ video }) {
         </div>
       ) : (
         <button className="youtube-thumbnail" onClick={() => setPlaying(true)}>
-          <Image src={`https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`} alt={video.title} fill />
+          <Image src={`https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`} alt={video.title} fill sizes="(max-width: 760px) 100vw, 33vw" />
           <PlayCircle className="play-button" size={56} />
         </button>
       )}

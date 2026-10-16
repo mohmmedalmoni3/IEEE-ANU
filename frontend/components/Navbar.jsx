@@ -4,7 +4,7 @@ import { apiGet } from "@/lib/api";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const links = [
@@ -31,28 +31,42 @@ const adminLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    let active = true;
     const saved = localStorage.getItem("ieee_user");
-    if (saved) setUser(JSON.parse(saved));
-    apiGet("/auth/me")
-      .then((data) => {
+    try {
+      if (saved) setUser(JSON.parse(saved));
+    } catch {
+      localStorage.removeItem("ieee_user");
+    }
+    const loadUser = () => apiGet("/auth/me").then((data) => {
+        if (!active) return;
         localStorage.setItem("ieee_user", JSON.stringify(data.user));
         setUser(data.user);
+        if (data.user?.show404 && pathname !== "/not-found") router.replace("/not-found");
       })
       .catch(() => {
+        if (!active) return;
         localStorage.removeItem("ieee_user");
         setUser(null);
       });
-  }, []);
+    loadUser();
+    window.addEventListener("ieee:session-change", loadUser);
+    return () => {
+      active = false;
+      window.removeEventListener("ieee:session-change", loadUser);
+    };
+  }, [pathname, router]);
 
   return (
     <nav className="navbar">
       <div className="nav-container">
         <Link className="logo" href="/">
-          <Image src="/IEEE.png" alt="IEEE ANU" width={54} height={54} className="logo-img" />
+          <Image src="/IEEE.png" alt="IEEE ANU" width={54} height={54} sizes="54px" priority className="logo-img" />
           <div className="logo-text">
             <h2>IEEE ANU</h2>
             <span>Ajloun University</span>

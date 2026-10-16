@@ -24,7 +24,11 @@ export default function ProfileClient() {
 
   useEffect(() => {
     const saved = localStorage.getItem("ieee_user");
-    if (saved) setUser(JSON.parse(saved));
+    try {
+      if (saved) setUser(JSON.parse(saved));
+    } catch {
+      localStorage.removeItem("ieee_user");
+    }
 
     async function loadProfile() {
       const token = getStoredToken();
@@ -37,12 +41,18 @@ export default function ProfileClient() {
       }
 
       try {
-        const profile = await apiGet("/auth/me");
-        localStorage.setItem("ieee_user", JSON.stringify(profile.user));
-        setUser(profile.user);
-
-        const applicationData = await apiGet("/applications/me");
-        setApplications(applicationData.applications || []);
+        const [profile, applicationData] = await Promise.allSettled([
+          apiGet("/auth/me"),
+          apiGet("/applications/me")
+        ]);
+        if (profile.status === "fulfilled") {
+          localStorage.setItem("ieee_user", JSON.stringify(profile.value.user));
+          setUser(profile.value.user);
+        } else if (profile.reason.status === 401) {
+          localStorage.removeItem("ieee_user");
+          setUser(null);
+        }
+        setApplications(applicationData.status === "fulfilled" ? applicationData.value.applications || [] : []);
       } catch {
         setApplications([]);
       } finally {
@@ -101,7 +111,7 @@ export default function ProfileClient() {
 
         <div className="application-status-card">
           <h3>حالة طلب الانضمام</h3>
-          {latestApplication ? (
+          {loading ? <p>جاري تحميل حالة الطلب...</p> : latestApplication ? (
             <>
               <span className={`status-badge ${statusClass(latestApplication.status)}`}>{latestApplication.status}</span>
               <p>آخر تحديث: {new Date(latestApplication.updatedAt || latestApplication.createdAt).toLocaleDateString("ar-JO")}</p>

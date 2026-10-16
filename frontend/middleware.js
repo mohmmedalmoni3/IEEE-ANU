@@ -4,7 +4,10 @@ export async function middleware(request) {
 
   if (token) {
     try {
-      const configuredApiUrl = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
+      let configuredApiUrl = (process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
+      if (!configuredApiUrl.startsWith("http") && process.env.VERCEL) {
+        configuredApiUrl = "https://ieee-anu.onrender.com/api";
+      }
       const authUrl = configuredApiUrl.startsWith("http")
         ? `${configuredApiUrl}/auth/me`
         : new URL(`${configuredApiUrl}/auth/me`, request.url);
@@ -32,16 +35,7 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - not-found (404 page itself)
-     * - paths containing a file extension (public images, fonts, and other assets)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|not-found|.*\\..*).*)",
-  ],
+  // Public pages are served directly from the CDN. Navbar checks restricted
+  // accounts after paint; protected pages still check before rendering.
+  matcher: ["/admin/:path*", "/profile/:path*", "/applications/:path*"],
 };

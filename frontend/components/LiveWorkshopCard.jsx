@@ -11,10 +11,11 @@ export default function LiveWorkshopCard({ workshop }) {
   const [joining, setJoining] = useState(false);
 
   useEffect(() => {
+    if (!workshop?.isVisible) return;
     apiGet("/auth/me")
       .then((data) => setUser(data.user))
       .catch(() => setUser(null));
-  }, []);
+  }, [workshop?.isVisible]);
 
   if (!workshop || !workshop.isVisible) return null;
 
