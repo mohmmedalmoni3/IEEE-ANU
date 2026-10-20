@@ -1,4 +1,6 @@
 "use client";
+import DescriptionEditor from "@/components/DescriptionEditor";
+import FormattedText from "@/components/FormattedText";
 
 import { apiGet, apiPatch } from "@/lib/api";
 import { useEffect, useState } from "react";
@@ -98,10 +100,7 @@ export default function LiveWorkshopAdminClient() {
           </label>
         </div>
 
-        <label className="admin-note-field">
-          وصف الورشة
-          <textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} rows={4} placeholder="اكتب وصفًا مختصرًا يظهر في الصفحة الرئيسية..." />
-        </label>
+        <DescriptionEditor label="وصف الورشة المباشرة" value={form.description} onChange={(value) => updateField("description", value)} />
 
         <div className="live-workshop-switches">
           <label>
@@ -125,7 +124,7 @@ export default function LiveWorkshopAdminClient() {
           <strong>{form.isLive ? "بث مباشر الآن" : "ورشة قادمة"}</strong>
         </div>
         <h2>{form.title || "عنوان الورشة"}</h2>
-        <p>{form.description || "سيظهر وصف الورشة هنا في الصفحة الرئيسية."}</p>
+        <FormattedText text={form.description || "سيظهر وصف الورشة هنا في الصفحة الرئيسية."} />
         <div className="live-workshop-meta">
           {form.speaker && <span>المتحدث: {form.speaker}</span>}
           {form.startsAt && <span>الموعد: {form.startsAt}</span>}

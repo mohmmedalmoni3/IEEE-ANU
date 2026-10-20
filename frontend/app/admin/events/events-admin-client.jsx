@@ -3,6 +3,8 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { Calendar, Clock, MapPin, Plus, Trash2 } from "lucide-react";
 import WorkshopDateTimePicker from "@/components/WorkshopDateTimePicker";
+import DescriptionEditor from "@/components/DescriptionEditor";
+import FormattedText from "@/components/FormattedText";
 import { useEffect, useState } from "react";
 
 function toLocalDateTime(value) {
@@ -129,15 +131,12 @@ export default function EventsAdminClient() {
                 placeholder="مثال: ورشة عمل تقنية"
               />
             </label>
-            <label>
-              الوصف
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={4}
-                placeholder="وصف تفصيلي للحدث..."
-              />
-            </label>
+            <DescriptionEditor
+              key={editingEvent?.id || "new-event"}
+              label="وصف الحدث أو الإعلان"
+              value={formData.description}
+              onChange={(description) => setFormData((current) => ({ ...current, description }))}
+            />
             <div className="workshop-date-time-field event-date-time-field">
               <span>تاريخ ووقت الحدث</span>
               <WorkshopDateTimePicker
@@ -187,7 +186,7 @@ export default function EventsAdminClient() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <h3>{event.title}</h3>
-                  {event.description && <p style={{ marginTop: "8px" }}>{event.description}</p>}
+                  <FormattedText className="admin-description-preview" text={event.description} />
                   <div style={{ display: "flex", gap: "16px", marginTop: "12px", flexWrap: "wrap" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <Calendar size={16} />

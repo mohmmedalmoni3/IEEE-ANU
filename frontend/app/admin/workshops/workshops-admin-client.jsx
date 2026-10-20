@@ -1,4 +1,6 @@
 "use client";
+import DescriptionEditor from "@/components/DescriptionEditor";
+import FormattedText from "@/components/FormattedText";
 
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { CalendarDays, Clock3, Plus, Trash2, Users } from "lucide-react";
@@ -186,7 +188,7 @@ export default function WorkshopsAdminClient() {
           <label>المدرب أو المتحدث<input value={form.speaker} onChange={(e) => update("speaker", e.target.value)} /></label>
           <label>المكان أو رابط الحضور<input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="القاعة أو رابط الاجتماع" /></label>
         </div>
-        <label className="workshop-wide-field">وصف الورشة<textarea rows={3} value={form.description} onChange={(e) => update("description", e.target.value)} /></label>
+        <div className="workshop-wide-field"><DescriptionEditor key={editingId || "new-workshop"} label="وصف الورشة" value={form.description} onChange={(value) => update("description", value)} /></div>
 
         <div className="workshop-schedule-section">
           <div className="workshop-schedule-header">
@@ -246,7 +248,7 @@ export default function WorkshopsAdminClient() {
       <div className="workshop-admin-list">
         {!workshops.length ? <div className="info-card center">لا توجد ورش مضافة حتى الآن.</div> : workshops.map((workshop) => (
           <article className="info-card workshop-admin-card" key={workshop.id}>
-            <div className="workshop-admin-card-top"><div><h2>{workshop.title}</h2><p>{workshop.description || "لا يوجد وصف"}</p></div><span className={workshop.isRegistrationAvailable ? "workshop-status open" : "workshop-status closed"}>{workshop.isRegistrationAvailable ? "التسجيل متاح" : "التسجيل مغلق"}</span></div>
+            <div className="workshop-admin-card-top"><div><h2>{workshop.title}</h2><FormattedText text={workshop.description || "لا يوجد وصف"} /></div><span className={workshop.isRegistrationAvailable ? "workshop-status open" : "workshop-status closed"}>{workshop.isRegistrationAvailable ? "التسجيل متاح" : "التسجيل مغلق"}</span></div>
             <div className="workshop-admin-meta"><span>الورشة: {formatDate(workshop.startsAt)} — {formatDate(workshop.endsAt)}</span><span><Users size={16} /> {workshop.registeredCount}{workshop.maxRegistrations ? ` / ${workshop.maxRegistrations}` : " مسجل"}</span><span>{workshop.isVisible ? "ظاهرة للمستخدمين" : "مخفية"}</span></div>
             <div className="workshop-admin-actions">
               <button className="btn btn-secondary" type="button" onClick={() => startEdit(workshop)}>تعديل</button>

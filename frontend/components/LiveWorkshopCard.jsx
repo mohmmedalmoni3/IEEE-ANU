@@ -1,4 +1,5 @@
 "use client";
+import FormattedText from "@/components/FormattedText";
 
 import { apiGet } from "@/lib/api";
 import { Radio, Video } from "lucide-react";
@@ -44,7 +45,7 @@ export default function LiveWorkshopCard({ workshop }) {
           <div className="live-workshop-icon"><Radio size={30} /></div>
           <div>
             <h2>{workshop.title}</h2>
-            {workshop.description && <p>{workshop.description}</p>}
+            <FormattedText text={workshop.description} />
             <div className="live-workshop-meta">
               {workshop.speaker && <span>المتحدث: {workshop.speaker}</span>}
               {workshop.startsAt && <span>الموعد: {workshop.startsAt}</span>}

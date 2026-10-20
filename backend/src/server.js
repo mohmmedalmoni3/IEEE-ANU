@@ -244,6 +244,16 @@ function cleanText(value, maxLength = 240) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+function cleanDescription(value) {
+  const text = String(value || "").replace(/\r\n?/g, "\n").trim();
+  if (text.length > 12000) {
+    const error = new Error("الوصف طويل جدًا. الحد الأقصى 12000 حرف.");
+    error.status = 400;
+    throw error;
+  }
+  return text;
+}
+
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
@@ -650,7 +660,7 @@ app.get("/api/admin/workshops", requireAuth, requireAdmin, async (req, res, next
 
 function normalizeWorkshopPayload(body) {
   const title = cleanText(body.title, 180);
-  const description = cleanText(body.description, 1500);
+  const description = cleanDescription(body.description);
   const speaker = cleanText(body.speaker, 180);
   const location = cleanText(body.location, 240);
   const startsAt = cleanText(body.startsAt, 40) || null;
@@ -904,7 +914,7 @@ app.patch("/api/admin/live-workshop", requireAuth, requireAdmin, async (req, res
     const existing = await getOne("SELECT id FROM live_workshop ORDER BY updated_at DESC LIMIT 1");
     const id = existing?.id || crypto.randomUUID();
     const title = cleanText(req.body.title, 180);
-    const description = cleanText(req.body.description, 800);
+    const description = cleanDescription(req.body.description);
     const meetUrl = cleanText(req.body.meetUrl, 500);
     const speaker = cleanText(req.body.speaker, 140);
     const startsAt = cleanText(req.body.startsAt, 80);
@@ -1708,7 +1718,7 @@ app.post("/api/events", requireAuth, requireAdmin, async (req, res, next) => {
     await run(
       `INSERT INTO events (id, title, description, event_date, location, is_active, created_at, updated_at)
        VALUES ($id, $title, $description, $eventDate, $location, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      { $id: id, $title: cleanText(title, 200), $description: cleanText(description, 2000), $eventDate: eventDate, $location: cleanText(location, 200) || null }
+      { $id: id, $title: cleanText(title, 200), $description: cleanDescription(description), $eventDate: eventDate, $location: cleanText(location, 200) || null }
     );
     
     const event = await getOne("SELECT * FROM events WHERE id = $id", { $id: id });
@@ -1743,7 +1753,7 @@ app.patch("/api/events/:id", requireAuth, requireAdmin, async (req, res, next) =
     }
     if (description !== undefined) {
       updates.push("description = $description");
-      params.$description = cleanText(description, 2000);
+      params.$description = cleanDescription(description);
     }
     if (eventDate !== undefined) {
       updates.push("event_date = $eventDate");
@@ -2267,6 +2277,7 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
+  if (error.status === 400) return res.status(400).json({ message: error.message });
   console.error(error);
   res.status(500).json({ message: "حدث خطأ في الخادم" });
 });

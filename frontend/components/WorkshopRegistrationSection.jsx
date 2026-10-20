@@ -1,4 +1,5 @@
 "use client";
+import FormattedText from "@/components/FormattedText";
 
 import { apiGet, apiPost } from "@/lib/api";
 import { CalendarDays, CheckCircle2, LoaderCircle, MapPin, Users } from "lucide-react";
@@ -105,7 +106,7 @@ export default function WorkshopRegistrationSection({ workshops = [] }) {
                 <span className="public-workshop-capacity"><Users size={15} /> {workshop.registeredCount}{workshop.maxRegistrations ? ` / ${workshop.maxRegistrations}` : " مسجل"}</span>
               </div>
               <h3>{workshop.title}</h3>
-              {workshop.description && <p className="public-workshop-description">{workshop.description}</p>}
+              <FormattedText className="public-workshop-description" text={workshop.description} />
               <div className="public-workshop-details">
                 <span><CalendarDays size={16} /> {displayDate(workshop.startsAt)}{workshop.endsAt ? ` — ${displayDate(workshop.endsAt)}` : ""}</span>
                 {workshop.speaker && <span>المدرب: {workshop.speaker}</span>}

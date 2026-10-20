@@ -1,4 +1,5 @@
 "use client";
+import FormattedText from "@/components/FormattedText";
 
 import { apiGet } from "@/lib/api";
 import { Calendar, Clock, MapPin, Play } from "lucide-react";
@@ -92,7 +93,7 @@ export default function EventCountdown() {
         </div>
 
         <h2 className="event-title">{event.title}</h2>
-        {event.description && <p className="event-description">{event.description}</p>}
+        <FormattedText className="event-description" text={event.description} />
 
         <div className="event-meta">
           {event.location && (
