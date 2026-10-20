@@ -583,13 +583,13 @@ app.get("/api/workshops", optionalAuth, async (req, res, next) => {
   }
 });
 
-app.post("/api/workshops/:id/register", requireAuth, workshopRegistrationLimiter, async (req, res, next) => {
+app.post("/api/workshops/:id/register", optionalAuth, workshopRegistrationLimiter, async (req, res, next) => {
   try {
     const workshop = await getOne("SELECT * FROM workshops WHERE id = $id", { $id: req.params.id });
     if (!workshop || !workshop.is_visible) return res.status(404).json({ message: "الورشة غير متاحة" });
 
-    const fullName = cleanText(`${req.user.firstname || ""} ${req.user.lastname || ""}`, 180);
-    const email = cleanText(req.user.email, 180).toLowerCase();
+    const fullName = cleanText(req.body.fullName || (req.user ? `${req.user.firstname || ""} ${req.user.lastname || ""}` : ""), 180);
+    const email = cleanText(req.body.email || req.user?.email, 180).toLowerCase();
     const phone = cleanText(req.body.phone, 50);
     if (!fullName || !isValidEmail(email)) {
       return res.status(400).json({ message: "يرجى إدخال الاسم والبريد الإلكتروني بشكل صحيح" });
@@ -611,7 +611,7 @@ app.post("/api/workshops/:id/register", requireAuth, workshopRegistrationLimiter
       `SELECT id FROM workshop_registrations
        WHERE workshop_id = $workshopId AND (user_id = $userId OR lower(email) = lower($email))
        LIMIT 1`,
-      { $workshopId: workshop.id, $userId: req.user.id, $email: email }
+      { $workshopId: workshop.id, $userId: req.user?.id || null, $email: email }
     );
     if (existingRegistration) return res.status(409).json({ message: "أنت مسجل بالفعل في هذه الورشة" });
 
@@ -632,7 +632,7 @@ app.post("/api/workshops/:id/register", requireAuth, workshopRegistrationLimiter
         `INSERT INTO workshop_registrations (id, workshop_id, user_id, full_name, email, phone, answers_json)
          VALUES ($id, $workshopId, $userId, $fullName, $email, $phone, $answers)`,
         {
-          $id: crypto.randomUUID(), $workshopId: workshop.id, $userId: req.user.id, $fullName: fullName, $email: email,
+          $id: crypto.randomUUID(), $workshopId: workshop.id, $userId: req.user?.id || null, $fullName: fullName, $email: email,
           $phone: phone || null, $answers: JSON.stringify(answers)
         }
       );
@@ -1510,7 +1510,7 @@ app.post("/api/admin/messages", requireAuth, requireAdmin, async (req, res, next
   }
 });
 
-app.post("/api/applications", applicationLimiter, requireAuth, async (req, res, next) => {
+app.post("/api/applications", applicationLimiter, optionalAuth, async (req, res, next) => {
   try {
     const fullName = cleanText(req.body.fullName, 140);
     const universityEmail = cleanText(req.body.universityEmail, 160).toLowerCase();
@@ -1537,12 +1537,12 @@ app.post("/api/applications", applicationLimiter, requireAuth, async (req, res, 
        WHERE user_id = $userId OR lower(university_email) = lower($universityEmail)
        ORDER BY created_at DESC
        LIMIT 1`,
-      { $userId: req.user?.id || "__guest__", $universityEmail: universityEmail }
+      { $userId: req.user?.id || null, $universityEmail: universityEmail }
     );
 
     if (duplicateApplication) {
       return res.status(409).json({
-        message: "لديك طلب سابق بالفعل. يمكنك متابعة حالته من الملف الشخصي بدل إرسال طلب جديد.",
+        message: "لديك طلب سابق بهذا البريد بالفعل. لا حاجة لإرساله مرة أخرى.",
         application: { id: duplicateApplication.id, status: duplicateApplication.status }
       });
     }
@@ -1585,8 +1585,9 @@ app.post("/api/applications", applicationLimiter, requireAuth, async (req, res, 
   }
 });
 
-app.get("/api/applications/me", requireAuth, async (req, res, next) => {
+app.get("/api/applications/me", optionalAuth, async (req, res, next) => {
   try {
+    if (!req.user) return res.json({ applications: [] });
     const applications = await getAll(
       `SELECT * FROM applications
        WHERE user_id = $userId OR lower(university_email) = lower($email)

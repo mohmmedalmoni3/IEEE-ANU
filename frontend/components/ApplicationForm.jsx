@@ -107,8 +107,8 @@ export default function ApplicationForm() {
       <div className="success-message">
         <CheckCircle size={70} />
         <h3>تم إرسال طلبك بنجاح</h3>
-        <p>سيتم مراجعة الطلب وتحديث حالته في ملفك الشخصي.</p>
-        <Link className="close-success" href="/profile">متابعة حالة الطلب</Link>
+        <p>سيتم مراجعة طلبك والتواصل معك عبر البريد الإلكتروني الذي أدخلته.</p>
+        <Link className="close-success" href="/">العودة إلى الصفحة الرئيسية</Link>
       </div>
     );
   }
@@ -117,7 +117,7 @@ export default function ApplicationForm() {
     <form className="application-form" onSubmit={submit}>
       <div className="form-header">
         <h2>نموذج الانضمام إلى IEEE ANU</h2>
-        <p>يرجى تعبئة الحقول بدقة حتى يصل الطلب بشكل واضح للفريق.</p>
+        <p>يمكنك إرسال طلبك مباشرة دون تسجيل دخول أو إنشاء حساب.</p>
       </div>
       {error && <div className="notice error">{error}</div>}
       <label>الاسم الكامل<input name="fullName" required placeholder="الاسم الرباعي" /></label>
